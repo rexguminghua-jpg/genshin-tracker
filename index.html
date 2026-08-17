@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1f3a5f" />
+  <title>原神任务追踪器</title>
+  <style>
+    /* ========== 设计令牌 ========== */
+    :root {
+      --bg-grad-1: #fdf6e3;
+      --bg-grad-2: #e8f1fb;
+      --bg-grad-3: #fef0f4;
+      --card: rgba(255, 255, 255, 0.86);
+      --card-strong: #ffffff;
+      --border: rgba(180, 195, 220, 0.4);
+      --border-strong: #c7d2e0;
+      --text: #1c2638;
+      --text-muted: #6b7a90;
+      --text-faint: #98a3b7;
+      --shadow-sm: 0 2px 6px rgba(31, 58, 95, 0.06);
+      --shadow: 0 6px 18px rgba(31, 58, 95, 0.08);
+      --shadow-lg: 0 18px 40px rgba(31, 58, 95, 0.12);
+
+      /* 配色（原神意象） */
+      --gold: #d4a849;
+      --gold-soft: #f7e9c4;
+      --gold-deep: #a8802a;
+      --blue: #3c6cb0;
+      --blue-soft: #d8e3f4;
+      --teal: #4ea6a3;
+      --green: #2e9a6c;
+      --green-soft: #d4f0e1;
+      --orange: #d77a3c;
+      --red: #c94545;
+      --gray: #8a98ad;
+      --gray-soft: #e7ebf2;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+        "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC",
+        sans-serif;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100%;
+    }
+
+    body {
+      background:
+        radial-gradient(at 20% 0%, var(--bg-grad-2), transparent 50%),
+        radial-gradient(at 100% 30%, var(--bg-grad-1), transparent 50%),
+        radial-gradient(at 50% 100%, var(--bg-grad-3), transparent 60%),
+        linear-gradient(180deg, #fbfaf6 0%, #f4f6fa 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    input, textarea, select { font-family: inherit; }
+
+    /* ========== 顶部 ========== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: saturate(180%) blur(14px);
+      -webkit-backdrop-filter: saturate(180%) blur(14px);
+      background: rgba(255, 255, 255, 0.75);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-mark {
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--gold), var(--blue));
+      color: #fff;
+      font-size: 17px;
+      box-shadow: 0 4px 10px rgba(60, 108, 176, 0.25);
+    }
+    .brand-text {
+      background: linear-gradient(135deg, var(--gold-deep), var(--blue));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: grid; place-items: center;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.6);
+      border: 1px solid var(--border);
+      transition: all .18s;
+      font-size: 16px;
+    }
+    .icon-btn:hover { background: var(--card-strong); color: var(--text); transform: translateY(-1px); }
+
+    /* ========== 布局容器 ========== */
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+    }
+
+    /* ========== 卡片通用 ========== */
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: all .2s ease;
+    }
+    .card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+
+    /* ========== 账号列表 ========== */
+    .page-head {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin: 4px 4px 18px;
+    }
+    .page-title {
+      font-size: 22px; font-weight: 700; letter-spacing: 0.5px;
+    }
+    .page-sub {
+      color: var(--text-muted); font-size: 13px; margin-top: 4px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: 10px;
+      font-weight: 600; font-size: 14px;
+      background: var(--card-strong);
+      color: var(--text);
+      border: 1px solid var(--border-strong);
+      transition: all .15s;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 10px rgba(212, 168, 73, 0.25);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 14px rgba(212, 168, 73, 0.35); }
+    .btn-blue {
+      background: linear-gradient(135deg, var(--blue), #5a8bcb);
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 10px rgba(60, 108, 176, 0.25);
+    }
+    .btn-ghost {
+      background: transparent; color: var(--text-muted);
+    }
+    .btn-danger {
+      color: var(--red); border-color: rgba(201, 69, 69, 0.3);
+      background: rgba(201, 69, 69, 0.04);
+    }
+    .btn-danger:hover { background: rgba(201, 69, 69, 0.1); }
+    .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
+
+    .account-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+    }
+    .account-card {
+      padding: 18px 18px 14px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .account-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--blue));
+      opacity: 0.6;
+    }
+    .acct-head {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 14px;
+    }
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      font-weight: 700; color: #fff;
+      font-size: 17px; letter-spacing: 0.5px;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    }
+    .acct-info { flex: 1; min-width: 0; }
+    .acct-name {
+      font-weight: 700; font-size: 16px; margin-bottom: 2px;
+      display: flex; align-items: center; gap: 6px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .acct-uid { font-size: 12px; color: var(--text-muted); }
+
+    .acct-block { margin-top: 12px; }
+    .acct-block + .acct-block { margin-top: 10px; }
+    .acct-block-head {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .acct-block-title {
+      display: flex; align-items: center; gap: 6px;
+      font-weight: 600; color: var(--text);
+    }
+    .acct-block-title .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+
+    .progress-row {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .progress-bar {
+      flex: 1; height: 6px;
+      background: var(--gray-soft);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .25s;
+    }
+    .progress-num {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted); min-width: 36px; text-align: right;
+    }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+    }
+    .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-paused  { background: var(--gray-soft); color: var(--gray); }
+    .status-progress{ background: var(--blue-soft); color: var(--blue); }
+    .status-done    { background: var(--green-soft); color: var(--green); }
+    .status-skip    { background: var(--gray-soft); color: var(--text-faint); }
+    .status-active  { background: var(--gold-soft); color: var(--gold-deep); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+    .empty-state-title {
+      font-size: 16px; font-weight: 700;
+      color: var(--text); margin-bottom: 6px;
+    }
+
+    /* ========== 详情页 ========== */
+    .detail-head {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 18px;
+    }
+    .back-btn {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: grid; place-items: center;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      transition: all .15s;
+    }
+    .back-btn:hover { color: var(--text); transform: translateX(-2px); }
+    .detail-head h2 { font-size: 20px; font-weight: 700; }
+    .detail-sub { color: var(--text-muted); font-size: 13px; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 720px) {
+      .detail-grid { grid-template-columns: 1fr; }
+    }
+
+    .module-card {
+      padding: 22px;
+      position: relative;
+    }
+    .module-head {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .module-title-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .module-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 18px;
+      color: #fff;
+    }
+    .module-icon.lixy { background: linear-gradient(135deg, var(--gold), var(--gold-deep)); }
+    .module-icon.daily { background: linear-gradient(135deg, var(--blue), var(--teal)); }
+    .module-title {
+      font-size: 17px; font-weight: 700;
+    }
+    .module-sub {
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    /* ========== 开关 ========== */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px; height: 26px;
+      flex-shrink: 0;
+    }
+    .switch input { display: none; }
+    .switch-slider {
+      position: absolute; inset: 0;
+      background: var(--gray-soft);
+      border-radius: 999px;
+      transition: all .2s;
+      cursor: pointer;
+    }
+    .switch-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: all .2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .switch input:checked + .switch-slider {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    }
+    .switch-blue input:checked + .switch-slider {
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+    }
+    .switch input:checked + .switch-slider::before {
+      transform: translateX(20px);
+    }
+    .switch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0;
+    }
+    .switch-label { font-size: 14px; }
+    .switch-help { font-size: 12px; color: var(--text-muted); }
+
+    /* ========== 数字 + 大按钮 ========== */
+    .big-stat {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 14px 0 16px;
+    }
+    .stat-box {
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 28px; font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--gold-deep), var(--blue));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .stat-label {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .checkin-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+    .checkin-cell {
+      aspect-ratio: 1;
+      display: grid; place-items: center;
+      border-radius: 12px;
+      background: var(--gray-soft);
+      color: var(--text-faint);
+      font-size: 20px;
+      font-weight: 700;
+      transition: all .2s;
+      border: 1px solid transparent;
+    }
+    .checkin-cell.done {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(212, 168, 73, 0.3);
+    }
+    .checkin-cell.done::before {
+      content: '✓';
+      font-size: 22px;
+    }
+    .checkin-cell.today {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212, 168, 73, 0.15);
+    }
+    .checkin-cell.today::before {
+      content: '今';
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .action-bar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .action-bar .btn { flex: 1; justify-content: center; }
+
+    .state-machine {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      background: var(--gray-soft);
+      border-radius: 14px;
+      padding: 6px;
+      margin: 12px 0 16px;
+      position: relative;
+    }
+    .sm-state {
+      padding: 12px 8px;
+      text-align: center;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all .2s;
+      cursor: pointer;
+      background: transparent;
+    }
+    .sm-state:hover { color: var(--text); }
+    .sm-state.current {
+      background: var(--card-strong);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-weight: 700;
+    }
+    .sm-state.current.paused { color: var(--gray); }
+    .sm-state.current.in_progress { color: var(--blue); }
+    .sm-state.current.completed { color: var(--green); }
+
+    .help-note {
+      display: flex; gap: 10px;
+      padding: 12px 14px;
+      background: rgba(212, 168, 73, 0.07);
+      border: 1px dashed rgba(212, 168, 73, 0.3);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .help-note::before {
+      content: '💡';
+      flex-shrink: 0;
+    }
+
+    /* ========== 模态框 ========== */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 30, 50, 0.4);
+      backdrop-filter: blur(4px);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      z-index: 100;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--card-strong);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      animation: popIn .2s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-head {
+      padding: 18px 22px 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; }
+    .modal-close {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      color: var(--text-muted);
+      display: grid; place-items: center;
+      transition: all .15s;
+    }
+    .modal-close:hover { background: var(--gray-soft); color: var(--text); }
+    .modal-body { padding: 18px 22px; }
+    .modal-foot {
+      padding: 12px 22px 18px;
+      display: flex; gap: 10px; justify-content: flex-end;
+    }
+    .field {
+      margin-bottom: 14px;
+    }
+    .field-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .field-input,
+    .field-select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: var(--card-strong);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: all .15s;
+    }
+    .field-input:focus,
+    .field-select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212, 168, 73, 0.15);
+    }
+
+    /* ========== Toast ========== */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(28, 38, 56, 0.92);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 200;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn .2s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translate(-50%, 10px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* ========== 关于页 ========== */
+    .about {
+      padding: 22px;
+      line-height: 1.8;
+      color: var(--text-muted);
+    }
+    .about h3 { color: var(--text); margin: 10px 0 8px; font-size: 15px; }
+    .about ol, .about ul { padding-left: 22px; margin-bottom: 14px; }
+
+    /* 移动端 */
+    @media (max-width: 600px) {
+      .container { padding: 16px 12px 30px; }
+      .account-grid { grid-template-columns: 1fr; }
+      .topbar-inner { padding: 10px 14px; }
+      .brand { font-size: 16px; }
+      .page-title { font-size: 18px; }
+      .big-stat { gap: 8px; }
+      .stat-num { font-size: 22px; }
+    }
+
+    /* 完成态装饰 */
+    .all-done-badge {
+      position: absolute;
+      top: 12px; right: 12px;
+      background: var(--green);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      box-shadow: 0 2px 6px rgba(46, 154, 108, 0.3);
+    }
+
+    /* ========== 首页汇总卡片 ========== */
+    .summary-card {
+      padding: 20px 22px;
+      margin-bottom: 18px;
+    }
+    .summary-head {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px;
+    }
+    .summary-head .icon { font-size: 18px; }
+    .summary-head .title { font-size: 16px; font-weight: 700; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .summary-item {
+      text-align: center;
+      padding: 14px 8px;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .summary-num {
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, var(--gold-deep), var(--blue));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1.2;
+    }
+    .summary-label {
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .summary-section-title {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .summary-section-title .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .summary-bar-wrap {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .summary-bar {
+      flex: 1; height: 6px;
+      background: var(--gray-soft);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .summary-bar-fill {
+      height: 100%; border-radius: 999px;
+      transition: width .25s;
+    }
+    .summary-bar-label {
+      font-size: 11px; color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .daily-dist {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    @media (max-width: 600px) {
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-row { grid-template-columns: 1fr; gap: 14px; }
+    }
+
+    /* ========== 本周 7 天日历（补打卡） ========== */
+    .week-calendar { margin: 4px 0 16px; }
+    .week-cal-label {
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .week-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .cal-cell {
+      aspect-ratio: 0.8;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 2px;
+      border-radius: 10px;
+      background: var(--gray-soft);
+      border: 1px solid transparent;
+      color: var(--text-faint);
+      transition: all .15s;
+      padding: 4px 2px;
+      cursor: default;
+    }
+    .cal-cell.clickable {
+      background: var(--card-strong);
+      border-color: var(--border-strong);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .cal-cell.clickable:hover {
+      border-color: var(--gold);
+      background: var(--gold-soft);
+      color: var(--gold-deep);
+      transform: translateY(-1px);
+    }
+    .cal-cell.done {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(212, 168, 73, 0.3);
+    }
+    .cal-cell.today {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212, 168, 73, 0.15);
+    }
+    .cal-cell.today:not(.done) {
+      background: var(--gold-soft);
+      color: var(--gold-deep);
+    }
+    .cal-cell.future { opacity: 0.35; }
+    .cal-day-name { font-size: 10px; opacity: 0.8; }
+    .cal-day-num { font-size: 14px; font-weight: 700; }
+    .cal-status { font-size: 12px; font-weight: 700; min-height: 14px; }
+
+    /* ========== 剩余历练点输入 ========== */
+    .points-field {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 14px;
+    }
+    .points-field-label {
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .points-field-help {
+      font-size: 11px; color: var(--text-muted);
+      flex: 1;
+    }
+    .points-input {
+      width: 90px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: var(--card-strong);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+      transition: all .15s;
+    }
+    .points-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(212, 168, 73, 0.15);
+    }
+    .points-input.low { border-color: var(--orange); }
+    .points-input.critical { border-color: var(--red); }
+    .points-prompt {
+      font-size: 11px; font-weight: 600;
+      margin-left: 6px; white-space: nowrap;
+    }
+    .points-prompt.red { color: var(--red); }
+    .points-prompt.orange { color: var(--orange); }
+
+    /* ========== 活动结束时间 ========== */
+    .activity-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 22px;
+      background: linear-gradient(135deg, rgba(212,168,73,0.08), rgba(46,154,108,0.06));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+    .activity-bar label { font-size: 14px; font-weight: 600; white-space: nowrap; }
+    .activity-bar input[type=date] {
+      padding: 6px 10px; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 14px; background: var(--card);
+      color: var(--text);
+    }
+    .weeks-badge {
+      font-size: 20px; font-weight: 800;
+      padding: 4px 14px; border-radius: 999px;
+    }
+    .weeks-badge.warn { background: rgba(226,67,67,0.12); color: var(--red); }
+    .weeks-badge.ok { background: rgba(46,154,108,0.12); color: var(--green); }
+    .weeks-badge.muted { color: var(--text-muted); font-size: 14px; font-weight: 600; }
+
+    /* ========== 云同步 ========== */
+    .sync-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 4px;
+    }
+    .sync-dot.off { background: var(--text-muted); }
+    .sync-dot.on { background: var(--green); animation: pulse 2s infinite; }
+    .sync-dot.err { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .sync-status-text { font-size: 13px; color: var(--text-muted); }
+
+    /* ========== 标签页导航 ========== */
+    .tab-bar {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      gap: 2px;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 2.5px solid transparent;
+      transition: all .15s;
+      position: relative;
+      bottom: -1px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--gold-deep);
+      border-bottom-color: var(--gold);
+    }
+
+    /* ========== 汇总页表格 ========== */
+    .summary-table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card-strong);
+    }
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .summary-table th {
+      padding: 12px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: rgba(231,235,242,0.6);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .summary-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .summary-table tr:last-child td { border-bottom: none; }
+    .summary-table tr.row-attention { background: rgba(212, 168, 73, 0.04); }
+    .summary-table tr.row-attention:hover { background: rgba(212, 168, 73, 0.09); }
+    .summary-table tr.row-done { opacity: 0.5; }
+    .summary-table tr.row-done:hover { opacity: 0.7; }
+    .mini-progress { display: flex; align-items: center; gap: 6px; }
+    .mini-bar {
+      width: 56px; height: 5px;
+      background: var(--gray-soft);
+      border-radius: 999px; overflow: hidden;
+    }
+    .mini-bar-fill { height: 100%; border-radius: 999px; }
+    .mini-num { font-size: 12px; font-weight: 700; min-width: 28px; text-align: right; }
+    .check-icon { font-size: 15px; line-height: 1; }
+    .points-tag {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 12px; font-weight: 700;
+    }
+    .points-tag.red { background: rgba(201,69,69,0.1); color: var(--red); }
+    .points-tag.orange { background: rgba(215,122,60,0.1); color: var(--orange); }
+    .points-tag.green { background: rgba(46,154,108,0.1); color: var(--green); }
+    .jump-btn {
+      padding: 5px 12px; border-radius: 8px;
+      font-size: 12px; font-weight: 600;
+      background: var(--gold-soft); color: var(--gold-deep);
+      border: 1px solid rgba(212,168,73,0.3);
+      transition: all .15s; white-space: nowrap;
+    }
+    .jump-btn:hover { background: var(--gold); color: #fff; }
+    .acct-cell { display: flex; align-items: center; gap: 8px; }
+    .acct-cell .avatar { width: 28px; height: 28px; font-size: 12px; border-radius: 8px; }
+    .acct-cell-name { font-weight: 600; }
+
+    /* ========== 版本徽章 ========== */
+    .version-badge {
+      font-size: 11px;
+      color: var(--text-faint);
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--gray-soft);
+      margin-left: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .summary-table { font-size: 12px; }
+      .summary-table th, .summary-table td { padding: 8px 10px; }
+      .mini-bar { width: 36px; }
+      .tab-btn { padding: 8px 14px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">原</div>
+        <span class="brand-text">原神任务追踪器</span>
+        <span class="version-badge" id="versionBadge">v1.7.0</span>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btnSync" title="云同步设置">☁️</button>
+        <button class="icon-btn" id="btnChangelog" title="更新日志">📋</button>
+        <button class="icon-btn" id="btnHelp" title="使用说明">?</button>
+        <button class="icon-btn" id="btnExport" title="导出数据">⬇</button>
+        <button class="icon-btn" id="btnImport" title="导入数据">⬆</button>
+      </div>
+    </div>
+    <nav class="tab-bar" id="tabBar">
+      <button class="tab-btn active" id="tabSummary" data-tab="summary">📊 汇总</button>
+      <button class="tab-btn" id="tabAccounts" data-tab="accounts">🎮 账号</button>
+    </nav>
+  </header>
+
+  <main class="container" id="root"></main>
+
+  <script>
+    /* ============================================================
+     * 应用数据 & 状态管理
+     * ============================================================ */
+    const STORAGE_KEY = 'genshin_task_tracker_v1';
+    const TASK_TOTAL_REQUIRED = 8;   // 完成一次砺行修远任务所需打卡(累计)
+    const CHECKINS_PER_TASK   = 5;   // 一次砺行修远任务所需的本周打卡次数
+    const PROGRESS_STATES     = ['paused', 'in_progress', 'completed'];
+    const PROGRESS_LABELS     = { paused: '暂停', in_progress: '进行中', completed: '已完成' };
+    const RESET_HOUR          = 5; // 每日打卡重置时间：凌晨5点（5:00前属于前一天）
+
+    let state = {
+      accounts: [],
+      activityEndDate: null,  // 'YYYY-MM-DD' 全局活动结束日期
+      tab: 'summary',      // 'summary' | 'accounts'
+      view: 'list',        // 'list' | 'detail' (accounts tab 内部)
+      activeId: null,
+      modal: null,         // 'addAccount' | 'editAccount' | 'help' | 'changelog' | 'syncSettings' | null
+      modalCtx: {},
+      sync: { apiKey: '', code: '', enabled: false, status: 'off' }  // 'off' | 'syncing' | 'on' | 'err'
+    };
+
+    // 防止空数据覆盖云端：首次拉取完成前阻止推送
+    let cloudPulled = true;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.accounts = Array.isArray(parsed.accounts) ? parsed.accounts : [];
+          state.activityEndDate = parsed.activityEndDate || null;
+          if (parsed.sync) {
+            // 旧格式迁移：有 url 无 apiKey → 重置同步配置
+            if (parsed.sync.url && !parsed.sync.apiKey) {
+              state.sync = { apiKey: '', code: '', enabled: false, status: 'off' };
+            } else {
+              state.sync = { ...state.sync, ...parsed.sync };
+            }
+          }
+        }
+      } catch (e) {
+        console.error('load failed', e);
+      }
+      // 同步已启用时，首次拉取完成前阻止推送，防止空数据覆盖云端
+      cloudPulled = !state.sync.enabled;
+    }
+
+    function persistLocal() {
+      const persist = { accounts: state.accounts, activityEndDate: state.activityEndDate, sync: state.sync, savedAt: new Date().toISOString() };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(persist));
+    }
+
+    function saveState() {
+      persistLocal();
+      syncPush(); // 自动推送
+    }
+
+    /* ============================================================
+     * 工具函数
+     * ============================================================ */
+    function uid() {
+      return 'a_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    // 5点前算前一天（打卡周期为5:00~次日4:59）
+    function adjustedNow(d = new Date()) {
+      const adj = new Date(d);
+      if (adj.getHours() < RESET_HOUR) adj.setDate(adj.getDate() - 1);
+      return adj;
+    }
+
+    function todayKey(d) {
+      const dt = d ? new Date(d) : adjustedNow();
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const day = String(dt.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // 返回当前自然周(周一为周首) 的起始日期，5点前属于上一周
+    function getWeekStart(d) {
+      const date = d ? new Date(d) : adjustedNow();
+      date.setHours(0, 0, 0, 0);
+      const day = date.getDay();
+      const diff = (day === 0 ? -6 : 1 - day); // 1=Mon
+      date.setDate(date.getDate() + diff);
+      return date;
+    }
+    function getWeekKey(d = new Date()) {
+      const start = getWeekStart(d);
+      const y = start.getFullYear();
+      const m = String(start.getMonth() + 1).padStart(2, '0');
+      const day = String(start.getDate()).padStart(2, '0');
+      return `w_${y}-${m}-${day}`;
+    }
+    function getWeekDays() {
+      const start = getWeekStart();
+      return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(start);
+        d.setDate(d.getDate() + i);
+        return d;
+      });
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function accountAvatarColor(name) {
+      const palette = [
+        ['#d4a849', '#a8802a'],
+        ['#3c6cb0', '#24508a'],
+        ['#4ea6a3', '#2d807d'],
+        ['#c95e7c', '#963d56'],
+        ['#7a5cc0', '#5241a0'],
+        ['#5d8a3e', '#3e6629'],
+        ['#c97a3a', '#9a5526']
+      ];
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+      return palette[h % palette.length];
+    }
+    function accountInitials(name) {
+      if (!name) return '?';
+      const trimmed = name.trim();
+      if (/[一-龥]/.test(trimmed)) {
+        return trimmed.slice(-1); // 中文取末字
+      }
+      const parts = trimmed.split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return trimmed.slice(0, 2).toUpperCase();
+    }
+
+    function showToast(msg) {
+      const old = document.querySelector('.toast');
+      if (old) old.remove();
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = msg;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1800);
+    }
+
+    /* ============================================================
+     * 业务操作
+     * ============================================================ */
+    function findAccount(id) {
+      return state.accounts.find(a => a.id === id);
+    }
+
+    function newAccount(payload) {
+      const acc = {
+        id: uid(),
+        name: payload.name?.trim() || '未命名账号',
+        uid: payload.uid?.trim() || '',
+        server: payload.server || '国服',
+        note: payload.note?.trim() || '',
+        createdAt: new Date().toISOString(),
+        liXingXiuYuan: {
+          participated: false,
+          checkIns: {},        // { 'YYYY-MM-DD': true }
+          weeks: {},           // { 'w_...': count } 本周打卡次数（跨年持久化到下一周清0）
+          tasksDone: 0,        // 已完成的砺行修远任务数
+          finished: false,     // 8 次任务全完成标记
+          finishedAt: null,
+          remainingPoints: null // 剩余历练点（手动输入，精确至小数点后1位）
+        },
+        dailyActivities: {
+          participated: false,
+          progress: 'paused',
+          lastChangedAt: null
+        }
+      };
+      state.accounts.push(acc);
+      saveState();
+      return acc;
+    }
+
+    function updateAccount(id, patch) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      Object.assign(acc, patch);
+      saveState();
+    }
+
+    function deleteAccount(id) {
+      const idx = state.accounts.findIndex(a => a.id === id);
+      if (idx >= 0) {
+        state.accounts.splice(idx, 1);
+        saveState();
+      }
+    }
+
+    // 统计指定周的打卡数（从 checkIns 实际记录统计）
+    function countWeekCheckIns(acc, weekStartDate) {
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const dd = new Date(weekStartDate);
+        dd.setDate(dd.getDate() + i);
+        return todayKey(dd);
+      });
+      return days.filter(k => acc.liXingXiuYuan.checkIns[k]).length;
+    }
+
+    // 本周打卡数
+    function weekCheckIns(acc) {
+      return countWeekCheckIns(acc, getWeekStart());
+    }
+
+    // 今天是否已打卡
+    function isTodayChecked(acc) {
+      return !!acc.liXingXiuYuan.checkIns[todayKey()];
+    }
+
+    // 切「参与」
+    function toggleParticipate(id, moduleKey) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      acc[moduleKey].participated = !acc[moduleKey].participated;
+      saveState();
+    }
+
+    // 打卡一次
+    function checkInToday(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const m = acc.liXingXiuYuan;
+      if (m.finished) return showToast('此账号 砺行修远 已全部完成');
+      if (!m.participated) return showToast('请先开启「参与」开关');
+      const today = todayKey();
+      if (m.checkIns[today]) return showToast('今天已打卡啦');
+
+      const weekCount = weekCheckIns(acc);
+      if (weekCount >= CHECKINS_PER_TASK) return showToast('本周任务已完成，下周一5点后继续');
+
+      m.checkIns[today] = true;
+      const wk = getWeekKey();
+      m.weeks = m.weeks || {};
+      const prevHigh = m.weeks[wk] || 0;
+      const newCount = weekCheckIns(acc);
+      m.weeks[wk] = Math.max(prevHigh, newCount); // high water mark，防止撤销后重复完成任务
+
+      // 刚好达到 5 次 → 完成 1 次任务（仅在首次跨越阈值时）
+      if (newCount >= CHECKINS_PER_TASK && prevHigh < CHECKINS_PER_TASK) {
+        m.tasksDone = (m.tasksDone || 0) + 1;
+        if (m.tasksDone >= TASK_TOTAL_REQUIRED) {
+          m.finished = true;
+          m.finishedAt = new Date().toISOString();
+          saveState();
+          showToast(`✅ 完成第 ${TASK_TOTAL_REQUIRED} 次任务，砺行修远收官！`);
+          return;
+        }
+        saveState();
+        showToast(`🎉 本周打卡满 ${CHECKINS_PER_TASK} 次，完成第 ${m.tasksDone} 次任务！打卡区域已关闭`);
+        return;
+      }
+
+      saveState();
+      showToast(`✓ 打卡成功（本周 ${newCount}/${CHECKINS_PER_TASK}）`);
+    }
+
+    // 撤销今日打卡
+    function undoTodayCheckIn(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const m = acc.liXingXiuYuan;
+      const today = todayKey();
+      if (!m.checkIns[today]) return;
+      delete m.checkIns[today];
+      // 不动 weeks (high water mark) 和 tasksDone — 任务一旦完成不因撤销而回退
+      saveState();
+      showToast('已撤销今日打卡');
+    }
+
+    // 补打卡（指定日期）
+    function checkInOnDate(id, dateKey) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const m = acc.liXingXiuYuan;
+      if (m.finished) return showToast('此账号 砺行修远 已全部完成');
+      if (!m.participated) return showToast('请先开启「参与」开关');
+      if (m.checkIns[dateKey]) return showToast('该日期已打卡');
+
+      // 不能补打未来
+      const today = todayKey();
+      if (dateKey > today) return showToast('不能给未来日期补打卡');
+
+      m.checkIns[dateKey] = true;
+      const [y, mo, d] = dateKey.split('-').map(Number);
+      const dateObj = new Date(y, mo - 1, d);
+      const wk = getWeekKey(dateObj);
+      m.weeks = m.weeks || {};
+      const prevHigh = m.weeks[wk] || 0;
+      const ws = getWeekStart(dateObj);
+      const newCount = countWeekCheckIns(acc, ws);
+      m.weeks[wk] = Math.max(prevHigh, newCount);
+
+      // 刚好达到 5 次 → 完成 1 次任务
+      if (newCount >= CHECKINS_PER_TASK && prevHigh < CHECKINS_PER_TASK) {
+        m.tasksDone = (m.tasksDone || 0) + 1;
+        if (m.tasksDone >= TASK_TOTAL_REQUIRED) {
+          m.finished = true;
+          m.finishedAt = new Date().toISOString();
+          saveState();
+          showToast(`✅ 完成第 ${TASK_TOTAL_REQUIRED} 次任务，砺行修远收官！`);
+          return;
+        }
+        saveState();
+        showToast(`🎉 该周打卡满 ${CHECKINS_PER_TASK} 次，完成第 ${m.tasksDone} 次任务`);
+        return;
+      }
+
+      saveState();
+      showToast(`✓ 已补打卡 ${dateKey}（本周 ${newCount}/${CHECKINS_PER_TASK}）`);
+    }
+
+    // 更新剩余历练点
+    function updateRemainingPoints(id, val) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      if (val === '' || val == null || isNaN(val)) {
+        acc.liXingXiuYuan.remainingPoints = null;
+      } else {
+        // 精确至小数点后 1 位
+        acc.liXingXiuYuan.remainingPoints = Math.round(parseFloat(val) * 10) / 10;
+      }
+      saveState();
+    }
+
+    // 历练点颜色阈值
+    function getPointsStyle(val) {
+      if (val == null || isNaN(val)) return null;
+      const n = parseFloat(val);
+      if (n < 12) return { cls: 'red', color: 'var(--red)', prompt: '尽快补充', promptCls: 'red' };
+      if (n < 40) return { cls: 'orange', color: 'var(--orange)', prompt: '历练点偏低', promptCls: 'orange' };
+      return { cls: 'green', color: 'var(--green)', prompt: '', promptCls: '' };
+    }
+
+    // 计算全局汇总
+    function computeSummary() {
+      const total = state.accounts.length;
+      let lxyParticipated = 0, lxyFinished = 0, lxyTodayChecked = 0;
+      let dailyPaused = 0, dailyInProgress = 0, dailyCompleted = 0, dailyNotPart = 0;
+
+      state.accounts.forEach(acc => {
+        const m = acc.liXingXiuYuan;
+        const d = acc.dailyActivities;
+        if (m.participated) {
+          lxyParticipated++;
+          if (m.finished) lxyFinished++;
+          if (isTodayChecked(acc)) lxyTodayChecked++;
+        }
+        if (!d.participated) {
+          dailyNotPart++;
+        } else if (d.progress === 'paused') {
+          dailyPaused++;
+        } else if (d.progress === 'in_progress') {
+          dailyInProgress++;
+        } else if (d.progress === 'completed') {
+          dailyCompleted++;
+        }
+      });
+
+      return { total, lxyParticipated, lxyFinished, lxyTodayChecked,
+               dailyPaused, dailyInProgress, dailyCompleted, dailyNotPart };
+    }
+
+    // 重置本周打卡
+    function resetWeek(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const m = acc.liXingXiuYuan;
+      const wk = getWeekKey();
+      m.weeks = m.weeks || {};
+      // 如果本周已完成任务，回退 tasksDone
+      if ((m.weeks[wk] || 0) >= CHECKINS_PER_TASK) {
+        m.tasksDone = Math.max(0, (m.tasksDone || 0) - 1);
+        if (m.finished && m.tasksDone < TASK_TOTAL_REQUIRED) {
+          m.finished = false;
+          m.finishedAt = null;
+        }
+      }
+      m.weeks[wk] = 0;
+      // 清除本周打卡记录
+      const days = getWeekDays().map(d => todayKey(d));
+      days.forEach(k => delete m.checkIns[k]);
+      saveState();
+      showToast('本周打卡已重置');
+    }
+
+    // 重置整个砺行修远进度
+    function resetLixyAll(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      acc.liXingXiuYuan = {
+        participated: acc.liXingXiuYuan.participated,
+        checkIns: {},
+        weeks: {},
+        tasksDone: 0,
+        finished: false,
+        finishedAt: null,
+        remainingPoints: acc.liXingXiuYuan.remainingPoints
+      };
+      saveState();
+    }
+
+    // 切日常活动进度
+    function advanceDailyProgress(id, target) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const d = acc.dailyActivities;
+      if (!d.participated) return showToast('请先开启「参与」开关');
+      const cur = PROGRESS_STATES.indexOf(d.progress);
+      let next = cur;
+      if (target) {
+        next = PROGRESS_STATES.indexOf(target);
+      } else {
+        next = (cur + 1) % PROGRESS_STATES.length;
+      }
+      d.progress = PROGRESS_STATES[next];
+      d.lastChangedAt = new Date().toISOString();
+      saveState();
+    }
+
+    function setDailyProgress(id, target) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const d = acc.dailyActivities;
+      if (!d.participated) return showToast('请先开启「参与」开关');
+      d.progress = target;
+      d.lastChangedAt = new Date().toISOString();
+      saveState();
+    }
+
+    function resetDailyProgress(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      acc.dailyActivities.progress = 'paused';
+      acc.dailyActivities.lastChangedAt = new Date().toISOString();
+      saveState();
+    }
+
+    /* ============================================================
+     * 视图渲染
+     * ============================================================ */
+    const root = document.getElementById('root');
+
+    function render() {
+      // 更新标签页高亮
+      document.getElementById('tabSummary')?.classList.toggle('active', state.tab === 'summary');
+      document.getElementById('tabAccounts')?.classList.toggle('active', state.tab === 'accounts');
+
+      if (state.tab === 'summary') {
+        renderSummaryPage();
+      } else {
+        if (state.view === 'list') renderList();
+        else if (state.view === 'detail') renderDetail();
+      }
+      renderModal();
+    }
+
+    function switchTab(tab) {
+      state.tab = tab;
+      if (tab === 'accounts' && state.view === 'detail' && !findAccount(state.activeId)) {
+        state.view = 'list';
+        state.activeId = null;
+      }
+      render();
+    }
+
+    // 从汇总页跳转到某账号详情
+    function enterDetailFromSummary(id) {
+      state.tab = 'accounts';
+      state.view = 'detail';
+      state.activeId = id;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ---- 汇总页 ---- */
+    function renderSummaryPage() {
+      const list = state.accounts;
+      const s = computeSummary();
+      const lxyPct = s.total ? (s.lxyParticipated / s.total * 100) : 0;
+      const lxyFinPct = s.total ? (s.lxyFinished / s.total * 100) : 0;
+      const todayPct = s.lxyParticipated ? (s.lxyTodayChecked / s.lxyParticipated * 100) : 0;
+
+      const rw = remainingWeeks();
+      const weeksHtml = rw == null
+        ? '<span class="weeks-badge muted">请设置活动结束日期</span>'
+        : rw <= 0
+          ? '<span class="weeks-badge warn">⚠ 本周结束</span>'
+          : rw <= 2
+            ? `<span class="weeks-badge warn">⏰ 剩余 ${rw} 周</span>`
+            : `<span class="weeks-badge ok">剩余 ${rw} 周</span>`;
+
+      root.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="page-title">📊 汇总仪表盘</div>
+            <div class="page-sub">全局任务进度一览 · 点击未完成账号可跳转跟进</div>
+          </div>
+        </div>
+
+        <div class="activity-bar">
+          <label>📅 砺行修远活动结束日期</label>
+          <input type="date" id="inpActivityEndDate" value="${state.activityEndDate || ''}" />
+          ${weeksHtml}
+        </div>
+
+        ${list.length === 0 ? `
+          <div class="card empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">还没有账号</div>
+            <div style="margin-top:8px;margin-bottom:18px;">先去「账号」标签页创建账号，汇总数据会自动出现在这里</div>
+            <button class="btn btn-primary" onclick="switchTab('accounts')">前往账号页 →</button>
+          </div>
+        ` : `
+          <div class="card summary-card">
+            <div class="summary-head">
+              <span class="icon">📊</span>
+              <span class="title">全局概览</span>
+            </div>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-num">${s.total}</div>
+                <div class="summary-label">账号总数</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-num">${s.lxyParticipated}/${s.total}</div>
+                <div class="summary-label">砺行修远参与</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-num">${s.lxyFinished}/${s.total}</div>
+                <div class="summary-label">砺行修远收官</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-num">${s.lxyTodayChecked}/${s.lxyParticipated}</div>
+                <div class="summary-label">今日已打卡</div>
+              </div>
+            </div>
+            <div class="summary-row">
+              <div>
+                <div class="summary-section-title">
+                  <span class="dot" style="background:var(--gold)"></span>砺行修远
+                </div>
+                <div class="summary-bar-wrap">
+                  <div class="summary-bar">
+                    <div class="summary-bar-fill" style="width:${lxyPct}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div>
+                  </div>
+                  <span class="summary-bar-label">参与 ${s.lxyParticipated}/${s.total}</span>
+                </div>
+                <div class="summary-bar-wrap">
+                  <div class="summary-bar">
+                    <div class="summary-bar-fill" style="width:${lxyFinPct}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div>
+                  </div>
+                  <span class="summary-bar-label">收官 ${s.lxyFinished}/${s.total}</span>
+                </div>
+                <div class="summary-bar-wrap">
+                  <div class="summary-bar">
+                    <div class="summary-bar-fill" style="width:${todayPct}%;background:var(--blue)"></div>
+                  </div>
+                  <span class="summary-bar-label">今日打卡 ${s.lxyTodayChecked}/${s.lxyParticipated}</span>
+                </div>
+              </div>
+              <div>
+                <div class="summary-section-title">
+                  <span class="dot" style="background:var(--blue)"></span>日常活动
+                </div>
+                <div class="daily-dist">
+                  <span class="status-pill status-paused">暂停 ${s.dailyPaused}</span>
+                  <span class="status-pill status-progress">进行中 ${s.dailyInProgress}</span>
+                  <span class="status-pill status-done">已完成 ${s.dailyCompleted}</span>
+                  ${s.dailyNotPart ? `<span class="status-pill status-skip">未参与 ${s.dailyNotPart}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:18px 22px;margin-top:18px;">
+            <div style="font-size:16px;font-weight:700;margin-bottom:14px;">📋 账号进度明细</div>
+            <div class="summary-table-wrap">
+              <table class="summary-table">
+                <thead>
+                  <tr>
+                    <th>账号</th>
+                    <th>砺行修远(累计)</th>
+                    <th>本周打卡</th>
+                    <th>今日打卡</th>
+                    <th>剩余历练点</th>
+                    <th>日常活动</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${list.map(renderSummaryRow).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `}
+      `;
+
+      document.getElementById('inpActivityEndDate')?.addEventListener('change', (e) => {
+        state.activityEndDate = e.target.value || null;
+        saveState();
+        render();
+        if (e.target.value) showToast('活动结束日期已更新');
+      });
+
+      root.querySelectorAll('[data-jump-id]').forEach(b => {
+        b.addEventListener('click', () => enterDetailFromSummary(b.dataset.jumpId));
+      });
+    }
+
+    function renderSummaryRow(acc) {
+      const m = acc.liXingXiuYuan;
+      const d = acc.dailyActivities;
+      const weekCount = weekCheckIns(acc);
+      const isTodayDone = isTodayChecked(acc);
+      const tasksDone = m.tasksDone || 0;
+
+      const lxyNeeds = m.participated && !m.finished && weekCount < CHECKINS_PER_TASK;
+      const dailyNeeds = d.participated && d.progress !== 'completed';
+      const ptsStyle = getPointsStyle(m.remainingPoints);
+      const pointsLow = ptsStyle && ptsStyle.cls === 'red';
+      const needsAttention = lxyNeeds || dailyNeeds || pointsLow;
+      const allDone = (m.finished || !m.participated || weekCount >= CHECKINS_PER_TASK) && (!d.participated || d.progress === 'completed');
+      const rowCls = allDone ? 'row-done' : (needsAttention ? 'row-attention' : '');
+
+      // 历练点
+      let pointsHtml = '<span style="color:var(--text-faint)">—</span>';
+      if (ptsStyle) {
+        pointsHtml = `<span class="points-tag ${ptsStyle.cls}">${m.remainingPoints}</span>`;
+        if (ptsStyle.prompt) pointsHtml += `<div class="points-prompt ${ptsStyle.promptCls}">${ptsStyle.prompt}</div>`;
+      }
+
+      // 日常活动
+      let dailyHtml = '<span class="status-pill status-skip">未参与</span>';
+      if (d.participated) {
+        const cls = d.progress === 'in_progress' ? 'status-progress' : d.progress;
+        dailyHtml = `<span class="status-pill ${cls}">${PROGRESS_LABELS[d.progress]}</span>`;
+      }
+
+      const [c1, c2] = accountAvatarColor(acc.name);
+
+      return `
+        <tr class="${rowCls}">
+          <td>
+            <div class="acct-cell">
+              <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
+              <div>
+                <div class="acct-cell-name">${escapeHtml(acc.name)}</div>
+                <div style="font-size:11px;color:var(--text-faint)">${acc.uid ? 'UID ' + escapeHtml(acc.uid) : escapeHtml(acc.server)}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            ${m.participated ? `
+              <div class="mini-progress">
+                <div class="mini-bar"><div class="mini-bar-fill" style="width:${tasksDone / TASK_TOTAL_REQUIRED * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div></div>
+                <span class="mini-num">${tasksDone}/${TASK_TOTAL_REQUIRED}</span>
+              </div>
+            ` : '<span style="color:var(--text-faint)">未参与</span>'}
+          </td>
+          <td>
+            ${m.participated && !m.finished ? (weekCount >= CHECKINS_PER_TASK
+              ? '<span style="color:var(--green);font-weight:600">本周完成</span>'
+              : `<div class="mini-progress">
+                <div class="mini-bar"><div class="mini-bar-fill" style="width:${weekCount / CHECKINS_PER_TASK * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div></div>
+                <span class="mini-num">${weekCount}/${CHECKINS_PER_TASK}</span>
+              </div>`)
+              : m.finished ? '<span style="color:var(--green);font-weight:600">收官</span>' : '<span style="color:var(--text-faint)">—</span>'}
+          </td>
+          <td>
+            ${m.participated && !m.finished && weekCount < CHECKINS_PER_TASK ? (isTodayDone ? '<span class="check-icon">✅</span>' : '<span class="check-icon">⬜</span>') : '<span style="color:var(--text-faint)">—</span>'}
+          </td>
+          <td>${pointsHtml}</td>
+          <td>${dailyHtml}</td>
+          <td>
+            ${needsAttention ? `<button class="jump-btn" data-jump-id="${acc.id}">跟进 →</button>` : '<span style="color:var(--text-faint);font-size:12px">已完成</span>'}
+          </td>
+        </tr>
+      `;
+    }
+
+    function renderList() {
+      const list = state.accounts;
+      root.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="page-title">我的账号</div>
+            <div class="page-sub">共 ${list.length} 个账号 · 数据保存在浏览器本地</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" id="btnAddAccount">+ 新建账号</button>
+            <button class="btn" id="btnBatchImport" title="从 CSV 文件批量导入账号">📥 批量导入</button>
+            <button class="btn" id="btnDownloadTpl" title="下载 CSV 导入模板">📋 下载模板</button>
+          </div>
+        </div>
+
+        ${list.length === 0 ? `
+          <div class="card empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">还没有账号</div>
+            <div style="margin-top:8px;margin-bottom:18px;">点击右上角新增按钮，记录你的第一个原神账号任务进度</div>
+            <button class="btn btn-primary" onclick="openAddAccountModal()">+ 新建账号</button>
+          </div>
+        ` : `
+          <div class="account-grid">
+            ${list.map(renderAccountCard).join('')}
+          </div>
+        `}
+      `;
+
+      document.getElementById('btnAddAccount')?.addEventListener('click', openAddAccountModal);
+      document.getElementById('btnBatchImport')?.addEventListener('click', batchImportFromCsv);
+      document.getElementById('btnDownloadTpl')?.addEventListener('click', downloadCsvTemplate);
+      root.querySelectorAll('[data-acct-id]').forEach(el => {
+        el.addEventListener('click', e => {
+          if (e.target.closest('[data-act]')) return; // 阻止卡片内按钮冒泡
+          const id = el.dataset.acctId;
+          enterDetail(id);
+        });
+      });
+      root.querySelectorAll('[data-act=edit]').forEach(b => {
+        b.addEventListener('click', e => { e.stopPropagation(); openEditAccountModal(b.dataset.id); });
+      });
+      root.querySelectorAll('[data-act=delete]').forEach(b => {
+        b.addEventListener('click', e => {
+          e.stopPropagation();
+          const id = b.dataset.id;
+          const acc = findAccount(id);
+          if (!acc) return;
+          if (confirm(`确定要删除账号「${acc.name}」吗？此操作不可撤销。`)) {
+            deleteAccount(id);
+            render();
+            showToast('已删除');
+          }
+        });
+      });
+    }
+
+    function renderAccountCard(acc) {
+      const m = acc.liXingXiuYuan;
+      const d = acc.dailyActivities;
+
+      const weekCount = weekCheckIns(acc);
+      const isTodayDone = isTodayChecked(acc);
+
+      // 砺行修远状态
+      let lxyStatusHtml = '';
+      if (!m.participated) {
+        lxyStatusHtml = `<span class="status-pill status-skip"><span class="dot"></span>未参与</span>`;
+      } else if (m.finished) {
+        lxyStatusHtml = `<span class="status-pill status-done"><span class="dot"></span>已完成</span>`;
+      } else if (weekCount >= CHECKINS_PER_TASK) {
+        lxyStatusHtml = `<span class="status-pill status-done"><span class="dot"></span>本周任务已完成</span>`;
+      } else if (isTodayDone) {
+        lxyStatusHtml = `<span class="status-pill status-skip"><span class="dot"></span>本日暂停</span>`;
+      } else {
+        lxyStatusHtml = `<span class="status-pill status-active"><span class="dot"></span>待今日打卡</span>`;
+      }
+
+      // 日常活动状态
+      let dStatusHtml = '';
+      if (!d.participated) {
+        dStatusHtml = `<span class="status-pill status-skip"><span class="dot"></span>未参与</span>`;
+      } else {
+        dStatusHtml = `<span class="status-pill status-${d.progress === 'in_progress' ? 'progress' : d.progress}">
+          <span class="dot"></span>${PROGRESS_LABELS[d.progress]}
+        </span>`;
+      }
+
+      const [c1, c2] = accountAvatarColor(acc.name);
+
+      return `
+        <div class="card account-card" data-acct-id="${acc.id}">
+          <div class="acct-head">
+            <div class="avatar" style="background:linear-gradient(135deg, ${c1}, ${c2})">${escapeHtml(accountInitials(acc.name))}</div>
+            <div class="acct-info">
+              <div class="acct-name">${escapeHtml(acc.name)}</div>
+              <div class="acct-uid">${acc.uid ? `UID ${escapeHtml(acc.uid)} · ` : ''}${escapeHtml(acc.server)}</div>
+            </div>
+            <button class="btn btn-sm btn-ghost" data-act="edit" data-id="${acc.id}" title="编辑">✏️</button>
+            <button class="btn btn-sm btn-ghost" data-act="delete" data-id="${acc.id}" title="删除">🗑️</button>
+          </div>
+
+          <div class="acct-block">
+            <div class="acct-block-head">
+              <span class="acct-block-title"><span class="dot" style="background:var(--gold)"></span>砺行修远</span>
+              ${lxyStatusHtml}
+            </div>
+            <div class="progress-row">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width:${((m.tasksDone || 0) / TASK_TOTAL_REQUIRED * 100)}%;background:linear-gradient(90deg, var(--gold), var(--gold-deep))"></div>
+              </div>
+              <div class="progress-num">${m.tasksDone || 0}/${TASK_TOTAL_REQUIRED}</div>
+            </div>
+            <div class="progress-row" style="margin-top:6px">
+              <div style="font-size:12px;color:var(--text-muted)">本周打卡</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width:${(weekCount / CHECKINS_PER_TASK * 100)}%;background:linear-gradient(90deg, var(--gold), var(--gold-deep))"></div>
+              </div>
+              <div class="progress-num">${weekCount}/${CHECKINS_PER_TASK}</div>
+            </div>
+            ${m.remainingPoints != null ? (() => {
+              const ps = getPointsStyle(m.remainingPoints);
+              const color = ps ? ps.color : 'var(--gold-deep)';
+              return `
+            <div class="progress-row" style="margin-top:6px">
+              <div style="font-size:12px;color:var(--text-muted)">剩余历练点</div>
+              <div style="flex:1"></div>
+              <div class="progress-num" style="color:${color}">${m.remainingPoints}</div>
+            </div>${ps && ps.prompt ? `<div style="font-size:11px;font-weight:600;color:${color};text-align:right;margin-top:2px">${ps.prompt}</div>` : ''}`;
+            })() : ''}
+          </div>
+
+          <div class="acct-block">
+            <div class="acct-block-head">
+              <span class="acct-block-title"><span class="dot" style="background:var(--blue)"></span>日常活动</span>
+              ${dStatusHtml}
+            </div>
+          </div>
+
+          ${m.finished ? '<div class="all-done-badge">🎉 收官</div>' : ''}
+        </div>
+      `;
+    }
+
+    /* ---- 详情页 ---- */
+    function enterDetail(id) {
+      state.view = 'detail';
+      state.activeId = id;
+      render();
+    }
+    function backToList() {
+      state.view = 'list';
+      state.activeId = null;
+      render();
+    }
+
+    function renderDetail() {
+      const acc = findAccount(state.activeId);
+      if (!acc) { backToList(); return; }
+      const m = acc.liXingXiuYuan;
+      const d = acc.dailyActivities;
+
+      const weekCount = weekCheckIns(acc);
+      const isTodayDone = isTodayChecked(acc);
+      const today = todayKey();
+      const tasksDone = m.tasksDone || 0;
+
+      // 周日历(显示 7 天，我们只显示 周一到周日 5 个打卡格子太高，这里用 5 个表示进度)
+      // 实际上"一周打卡 5 次"不一定要连号，所以直接展示成 5 个槽位。
+      const weekDays = getWeekDays();
+      // 标记今天是哪一天
+      const todayIdx = weekDays.findIndex(dd => todayKey(dd) === today);
+
+      // 砍 5 格的实现：显示本周中已打卡的日
+      const weekFilled = weekDays.map(dd => todayKey(dd))
+                                 .filter(k => !!m.checkIns[k]);
+
+      root.innerHTML = `
+        <div class="detail-head">
+          <button class="back-btn" id="btnBack">←</button>
+          <div style="flex:1;min-width:0">
+            <h2>${escapeHtml(acc.name)}</h2>
+            <div class="detail-sub">${acc.uid ? `UID ${escapeHtml(acc.uid)} · ` : ''}${escapeHtml(acc.server)}${acc.note ? ` · ${escapeHtml(acc.note)}` : ''}</div>
+          </div>
+          <button class="btn btn-sm" id="btnEditInline">编辑</button>
+        </div>
+
+        <div class="detail-grid">
+          <!-- 砺行修远 -->
+          <section class="card module-card">
+            <div class="module-head">
+              <div class="module-title-wrap">
+                <div class="module-icon lixy">📜</div>
+                <div>
+                  <div class="module-title">砺行修远</div>
+                  <div class="module-sub">每周打卡 ${CHECKINS_PER_TASK} 次 → 完成 1 个任务 · 共 ${TASK_TOTAL_REQUIRED} 次 · 每日5点重置</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">是否参与</div>
+                <div class="switch-help">关闭后将不再累计与提醒</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" data-toggle="lxy" ${m.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="big-stat">
+              <div class="stat-box">
+                <div class="stat-num">${tasksDone}</div>
+                <div class="stat-label">任务进度（/${TASK_TOTAL_REQUIRED}）</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-num">${weekCount}</div>
+                <div class="stat-label">本周打卡（/${CHECKINS_PER_TASK}）</div>
+              </div>
+            </div>
+
+            <div class="help-note">
+              ${m.finished
+                ? '本账号砺行修远已全部完成。可在历史留档；若出新活动可点下方「重置进度」重新开始。'
+                : !m.participated
+                  ? '请先开启「参与」开关，再开始每日打卡。'
+                  : weekCount >= CHECKINS_PER_TASK
+                    ? '✅ 本周任务已完成！打卡区域已关闭，下周一凌晨5点后自动开启新一周打卡。'
+                    : isTodayDone
+                      ? '今天已打卡。如漏了之前某天，可在下方日历点击对应日期补打卡。'
+                      : '点击「打卡」记录今天任务，或点击下方日历中过去未打卡的日期补打。'
+              }
+              <br><span style="font-size:11px;color:var(--text-faint)">打卡周期：每日凌晨5点重置（5:00~次日4:59为一天）</span>
+            </div>
+
+            <div class="points-field">
+              <span class="points-field-label">剩余历练点</span>
+              <input type="number" class="points-input ${(() => { const ps = getPointsStyle(m.remainingPoints); return ps ? ps.cls : ''; })()}" id="inpRemainingPoints"
+                value="${m.remainingPoints != null ? m.remainingPoints : ''}"
+                step="0.1" min="0" placeholder="0.0"
+                onwheel="this.blur()" />
+              <span class="points-field-help">手动输入，精确至小数点后 1 位</span>
+              ${(() => { const ps = getPointsStyle(m.remainingPoints); return ps && ps.prompt ? `<span class="points-prompt ${ps.promptCls}">${ps.prompt}</span>` : ''; })()}
+            </div>
+
+            <div class="week-calendar">
+              <div class="week-cal-label">本周打卡日历${m.participated && !m.finished && weekCount < CHECKINS_PER_TASK ? ' · 点击过去未打卡日期可补打' : ''}</div>
+              <div class="week-cal-grid">
+                ${weekDays.map((dd, i) => {
+                  const dk = todayKey(dd);
+                  const isChecked = !!m.checkIns[dk];
+                  const isToday = dk === today;
+                  const isPast = dk < today;
+                  const isFuture = dk > today;
+                  const canCheckIn = m.participated && !m.finished && !isChecked && isPast && weekCount < CHECKINS_PER_TASK;
+                  const dayNames = ['一','二','三','四','五','六','日'];
+                  return `<button class="cal-cell ${isChecked ? 'done' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''} ${canCheckIn ? 'clickable' : ''}"
+                    ${canCheckIn ? `data-checkin-date="${dk}"` : ''}>
+                    <span class="cal-day-name">周${dayNames[i]}</span>
+                    <span class="cal-day-num">${dd.getDate()}</span>
+                    <span class="cal-status">${isChecked ? '✓' : isToday ? (m.participated && !m.finished ? '今' : '') : canCheckIn ? '+' : ''}</span>
+                  </button>`;
+                }).join('')}
+              </div>
+            </div>
+
+            <div class="action-bar">
+              <button class="btn btn-primary" id="btnCheckin" ${(!m.participated || m.finished || isTodayDone || weekCount >= CHECKINS_PER_TASK) ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+                ✓ 今日打卡
+              </button>
+              ${isTodayDone ? `<button class="btn btn-ghost" id="btnUndo">撤销打卡</button>` : ''}
+            </div>
+            <div class="action-bar" style="margin-top:8px">
+              <button class="btn btn-sm btn-ghost" id="btnResetWeek">↺ 重置本周打卡</button>
+              <button class="btn btn-sm btn-danger" id="btnResetLixy">⚠ 重置全部进度</button>
+            </div>
+          </section>
+
+          <!-- 日常活动 -->
+          <section class="card module-card">
+            <div class="module-head">
+              <div class="module-title-wrap">
+                <div class="module-icon daily">🌿</div>
+                <div>
+                  <div class="module-title">日常活动</div>
+                  <div class="module-sub">暂停 → 进行中 → 已完成</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">是否参与</div>
+                <div class="switch-help">关闭后状态保持但不再提醒</div>
+              </div>
+              <label class="switch switch-blue">
+                <input type="checkbox" data-toggle="daily" ${d.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
+            <div class="help-note">
+              ${!d.participated
+                ? '开启参与后，选择当前进度。'
+                : d.progress === 'completed'
+                  ? '今天的日常活动已完成，可在切换新的一天时点击「重置」回到「暂停」。'
+                  : d.progress === 'in_progress'
+                    ? '当前正在进行中。完成全部任务后，点击右下角推进至「已完成」。'
+                    : '当前暂停。开始任务时，点击「推进」进入「进行中」。'}
+            </div>
+
+            <div class="state-machine">
+              ${PROGRESS_STATES.map(s => `
+                <button class="sm-state ${d.progress === s ? 'current ' + s : ''}"
+                  data-set-progress="${s}" ${!d.participated ? 'disabled style="opacity:.5"' : ''}>
+                  ${PROGRESS_LABELS[s]}
+                </button>
+              `).join('')}
+            </div>
+
+            <div class="action-bar">
+              <button class="btn btn-blue" id="btnAdvanceProgress" ${!d.participated || d.progress === 'completed' ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+                ⏩ 推进到下一阶段
+              </button>
+              <button class="btn btn-ghost" id="btnResetProgress" ${!d.participated ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+                ↺ 重置为暂停
+              </button>
+            </div>
+          </section>
+        </div>
+      `;
+
+      document.getElementById('btnBack').addEventListener('click', backToList);
+      document.getElementById('btnEditInline').addEventListener('click', () => openEditAccountModal(acc.id));
+
+      // toggle
+      root.querySelectorAll('[data-toggle]').forEach(input => {
+        input.addEventListener('change', () => {
+          const k = input.dataset.toggle;
+          toggleParticipate(acc.id, k === 'lxy' ? 'liXingXiuYuan' : 'dailyActivities');
+          render();
+        });
+      });
+      // checkin
+      document.getElementById('btnCheckin')?.addEventListener('click', () => { checkInToday(acc.id); render(); });
+      document.getElementById('btnUndo')?.addEventListener('click', () => { undoTodayCheckIn(acc.id); render(); });
+      document.getElementById('btnResetWeek')?.addEventListener('click', () => {
+        if (confirm('重置本周打卡？此操作仅清除本周内打卡，不影响累计任务数。')) {
+          resetWeek(acc.id); render();
+        }
+      });
+      document.getElementById('btnResetLixy')?.addEventListener('click', () => {
+        if (confirm('重置砺行修远全部进度？任务计数、已打卡日期都会清空，请谨慎操作。')) {
+          resetLixyAll(acc.id); render();
+          showToast('进度已重置');
+        }
+      });
+      // progress
+      root.querySelectorAll('[data-set-progress]').forEach(b => {
+        b.addEventListener('click', () => { setDailyProgress(acc.id, b.dataset.setProgress); render(); });
+      });
+      document.getElementById('btnAdvanceProgress')?.addEventListener('click', () => { advanceDailyProgress(acc.id); render(); });
+      document.getElementById('btnResetProgress')?.addEventListener('click', () => {
+        if (confirm('将日常活动进度重置为「暂停」？')) { resetDailyProgress(acc.id); render(); }
+      });
+      // 补打卡日历点击
+      root.querySelectorAll('[data-checkin-date]').forEach(cell => {
+        cell.addEventListener('click', () => {
+          checkInOnDate(acc.id, cell.dataset.checkinDate);
+          render();
+        });
+      });
+      // 剩余历练点输入
+      const pointsInput = document.getElementById('inpRemainingPoints');
+      pointsInput?.addEventListener('change', () => {
+        updateRemainingPoints(acc.id, pointsInput.value);
+        showToast('历练点已更新');
+        render();
+      });
+    }
+
+    /* ============================================================
+     * 模态框
+     * ============================================================ */
+    function openAddAccountModal() {
+      state.modal = 'addAccount';
+      state.modalCtx = {};
+      render();
+    }
+    function openEditAccountModal(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      state.modal = 'editAccount';
+      state.modalCtx = { id };
+      render();
+    }
+    function closeModal() {
+      state.modal = null;
+      state.modalCtx = {};
+      render();
+    }
+
+    function renderModal() {
+      let modal = document.querySelector('.modal-mask');
+      modal?.remove();
+      if (!state.modal) return;
+
+      if (state.modal === 'addAccount' || state.modal === 'editAccount') {
+        const editing = state.modal === 'editAccount';
+        const acc = editing ? findAccount(state.modalCtx.id) : null;
+        const v = editing ? acc : { name: '', uid: '', server: '国服', note: '' };
+        modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        modal.innerHTML = `
+          <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-head">
+              <div class="modal-title">${editing ? '编辑账号' : '新建账号'}</div>
+              <button class="modal-close" data-act="close">✕</button>
+            </div>
+            <div class="modal-body">
+              <div class="field">
+                <label class="field-label">账号名称 <span style="color:var(--red)">*</span></label>
+                <input class="field-input" id="inpName" placeholder="如：主号 / 小号-A" value="${escapeHtml(v.name)}" />
+              </div>
+              <div class="field">
+                <label class="field-label">UID（可选）</label>
+                <input class="field-input" id="inpUid" placeholder="9 位游戏 UID" value="${escapeHtml(v.uid)}" inputmode="numeric" />
+              </div>
+              <div class="field">
+                <label class="field-label">服务器</label>
+                <select class="field-select" id="inpServer">
+                  ${['国服','B服','国际服','港澳台'].map(s => `<option ${v.server===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">备注（可选）</label>
+                <input class="field-input" id="inpNote" placeholder="例如：冒险等阶 60" value="${escapeHtml(v.note || '')}" />
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn" data-act="close">取消</button>
+              <button class="btn btn-primary" data-act="save">${editing ? '保存' : '创建'}</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
+        modal.querySelector('[data-act=save]').addEventListener('click', () => {
+          const name = document.getElementById('inpName').value.trim();
+          const uid = document.getElementById('inpUid').value.trim();
+          const server = document.getElementById('inpServer').value;
+          const note = document.getElementById('inpNote').value.trim();
+          if (!name) { showToast('请填写账号名称'); return; }
+          if (editing) {
+            updateAccount(acc.id, { name, uid, server, note });
+            closeModal();
+            showToast('已保存');
+          } else {
+            newAccount({ name, uid, server, note });
+            closeModal();
+            showToast('账号已创建');
+          }
+        });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        return;
+      }
+
+      if (state.modal === 'help') {
+        modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        modal.innerHTML = `
+          <div class="modal" onclick="event.stopPropagation()" style="max-width:560px">
+            <div class="modal-head">
+              <div class="modal-title">使用说明</div>
+              <button class="modal-close" data-act="close">✕</button>
+            </div>
+            <div class="modal-body about">
+              <h3>📊 汇总标签页</h3>
+              <ul>
+                <li>全局概览：账号总数、砺行修远参与/收官、今日打卡统计。</li>
+                <li>设置活动结束日期后自动显示剩余周数，≤2 周红色高亮提醒。</li>
+                <li>账号进度明细表格：砺行修远累计、本周打卡、今日打卡、剩余历练点、日常活动一目了然。</li>
+                <li>未完成账号高亮显示，点击「跟进 →」跳转至账号详情页。</li>
+                <li>历练点颜色：<strong style="color:var(--red)">&lt;12 红色</strong>（尽快补充）、<strong style="color:var(--orange)">12~40 橙色</strong>（偏低）、<strong style="color:var(--green)">≥40 绿色</strong>。</li>
+              </ul>
+              <h3>🎮 账号标签页</h3>
+              <ul>
+                <li>账号列表：新增/编辑/删除账号，卡片显示进度概览。</li>
+                <li>支持「📥 批量导入」：下载 CSV 模板，填写后批量导入多个账号。</li>
+                <li>点击账号卡片进入详情页，进行打卡和状态管理。</li>
+              </ul>
+              <h3>📜 砺行修远模块</h3>
+              <ul>
+                <li>每打卡 1 天算 1 次，每周打满 5 次自动完成 1 次「砺行修远」任务。</li>
+                <li>累计完成 8 次任务后即收官，会显示「🎉 收官」徽章。</li>
+                <li>每天只能打卡 1 次，重复点击会提示已打卡。</li>
+                <li>跨自然周（周一）后，本周打卡数会自动清零。</li>
+              </ul>
+              <h3>🌿 日常活动模块</h3>
+              <ul>
+                <li>简单的状态机：<strong>暂停 → 进行中 → 已完成</strong>。</li>
+                <li>点击对应阶段卡片可直接跳转，或用「推进到下一阶段」按钮。</li>
+                <li>新一天开始时，手动重置到「暂停」。</li>
+              </ul>
+              <h3>🛠 数据 & 云同步</h3>
+              <ul>
+                <li>数据保存在浏览器 <code>localStorage</code>，支持 JSON 导出/导入备份。</li>
+                <li>点顶栏 ☁️ 可启用云同步（基于 jsonbin.io 免费云存储），实现跨设备自动同步。</li>
+                <li>云同步配置：注册 jsonbin.io → 获取 API Key → 生成同步码 → 启用。</li>
+                <li>各设备填入相同的 API Key + 同步码即可共享数据，打开自动拉取、修改自动推送。</li>
+              </ul>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-primary" data-act="close">知道了</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        return;
+      }
+
+      if (state.modal === 'changelog') {
+        modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        modal.innerHTML = `
+          <div class="modal" onclick="event.stopPropagation()" style="max-width:560px">
+            <div class="modal-head">
+              <div class="modal-title">更新日志</div>
+              <button class="modal-close" data-act="close">✕</button>
+            </div>
+            <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.7.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-15</span></div>
+                <ul style="margin-top:6px">
+                  <li>本周打卡满 5 次后打卡区域自动关闭，状态显示「本周任务已完成」</li>
+                  <li>日历保持可见（只读），打卡按钮和补打卡入口禁用，下周一 5 点后自动开启</li>
+                  <li>每日打卡重置时间改为凌晨 5 点（5:00~次日 4:59 为一天），周边界同步调整</li>
+                  <li><code>weekCheckIns</code> 改为从 <code>checkIns</code> 实际记录统计，不再依赖可能被重置的 <code>weeks</code> 计数器</li>
+                  <li>撤销打卡不再回退已完成的任务（high water mark 防重复完成）</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.6.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-13</span></div>
+                <ul style="margin-top:6px">
+                  <li>CSV 模板升级：新增「砺行修远已完成任务数」和「日常活动进度」字段，支持导入完整进度数据</li>
+                  <li>修复 CSV 导入服务器字段乱码：改用 ArrayBuffer 读取 + UTF-8/GBK 编码自动检测</li>
+                  <li>修复导入后参与开关未生效：编码修复后「是/否」可正确解析，不再因乱码导致 <code>participated</code> 保持 false</li>
+                  <li>CSV 解析支持引号包裹字段，跳过以 # 开头的说明行</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.5.2 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-13</span></div>
+                <ul style="margin-top:6px">
+                  <li>修复多端同步竞态条件：新设备首次打开时，空数据可能在云端拉取前就被推送到云端，覆盖原有数据</li>
+                  <li>新增 <code>cloudPulled</code> 守卫标志：首次拉取完成前阻止所有推送操作</li>
+                  <li>拆分 <code>persistLocal()</code>（仅存本地）与 <code>saveState()</code>（存本地+推送），避免配置导入时触发空推送</li>
+                  <li>「立即推送」按钮增加守卫检查，拉取未完成时提示等待</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.5.1 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-13</span></div>
+                <ul style="margin-top:6px">
+                  <li>新增「生成同步链接」功能：一键生成含同步配置的 URL，在其他域名/设备打开即可自动配置并拉取数据</li>
+                  <li>支持 URL hash 自动导入同步配置（<code>#sync=apiKey&code</code>），解决跨域名 localStorage 隔离问题</li>
+                  <li>同步设置弹窗使用步骤更新</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.5.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-11</span></div>
+                <ul style="margin-top:6px">
+                  <li>云同步改用 jsonbin.io 云存储，无需自建后端服务器</li>
+                  <li>同步设置：填入 jsonbin.io API Key → 点「生成」创建同步码 → 启用</li>
+                  <li>手机、电脑、任意网络均可同步，不再依赖局域网</li>
+                  <li>旧版同步配置自动迁移重置，需重新配置 API Key</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.4.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-11</span></div>
+                <ul style="margin-top:6px">
+                  <li>新增云同步功能：跨设备数据自动同步</li>
+                  <li>顶栏新增 ☁️ 云同步按钮，支持配置同步服务器和同步码</li>
+                  <li>打开页面自动拉取云端数据，每次修改自动推送（1.5s 防抖）</li>
+                  <li>支持手动测试连接、立即拉取、立即推送</li>
+                  <li>同步状态实时显示（⏳同步中 / ☁️✓已连接 / ☁️!失败）</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.3.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-11</span></div>
+                <ul style="margin-top:6px">
+                  <li>账号列表页新增批量导入功能，支持 CSV 模板下载和批量导入账号</li>
+                  <li>汇总页新增砺行修远活动结束日期设置，自动计算并显示剩余周数</li>
+                  <li>剩余周数 ≤2 周时红色高亮提醒，≤0 显示「本周结束」</li>
+                  <li>引入 ponytail 编码规范，优化代码结构</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.2.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-11</span></div>
+                <ul style="margin-top:6px">
+                  <li>新增标签页导航：「汇总」与「账号」分属独立标签页</li>
+                  <li>汇总页新增账号进度明细表格，支持砺行修远累计/本周打卡/今日打卡/历练点/日常活动多维度一览</li>
+                  <li>汇总页未完成账号支持一键跳转至账号详情页跟进</li>
+                  <li>剩余历练点增加颜色阈值提示：&lt;12 红色(尽快补充)、12~40 橙色(偏低)、≥40 绿色</li>
+                  <li>新增应用内更新日志功能</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.1.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-11</span></div>
+                <ul style="margin-top:6px">
+                  <li>新增首页全局汇总卡片（账号数、参与数、收官数、今日打卡数）</li>
+                  <li>砺行修远打卡改为本周 7 天日历视图，支持过去日期补打卡</li>
+                  <li>砺行修远新增「剩余历练点」字段（手动输入，精确至小数点后 1 位）</li>
+                  <li>账号卡片同步显示历练点</li>
+                </ul>
+              </div>
+              <div>
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.0.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-11</span></div>
+                <ul style="margin-top:6px">
+                  <li>初始版本发布</li>
+                  <li>账号管理：新增/编辑/删除原神账号</li>
+                  <li>砺行修远模块：参与开关、每日打卡、每周满 5 次自动结算、累计 8 次收官</li>
+                  <li>日常活动模块：暂停 → 进行中 → 已完成 三段式状态机</li>
+                  <li>数据导出/导入 JSON、使用说明、移动端适配</li>
+                </ul>
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn btn-primary" data-act="close">知道了</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        return;
+      }
+
+      if (state.modal === 'syncSettings') {
+        const s = state.sync;
+        modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        modal.innerHTML = `
+          <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+            <div class="modal-head">
+              <div class="modal-title">☁️ 云同步设置</div>
+              <button class="modal-close" data-act="close">✕</button>
+            </div>
+            <div class="modal-body">
+              <div class="field">
+                <label class="field-label">jsonbin.io API Key <span style="color:var(--red)">*</span></label>
+                <input class="field-input" id="inpSyncApiKey" placeholder="$2a$10$..." value="${escapeHtml(s.apiKey)}" />
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                  免费获取：<a href="https://jsonbin.io" target="_blank" style="color:var(--blue)">jsonbin.io</a> → 注册 → API Keys → 复制 X-Master-Key
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">同步码 <span style="color:var(--red)">*</span></label>
+                <div style="display:flex;gap:8px">
+                  <input class="field-input" id="inpSyncCode" placeholder="点右侧生成" value="${escapeHtml(s.code)}" style="flex:1" />
+                  <button class="btn btn-sm" id="btnGenCode" style="white-space:nowrap">🔑 生成</button>
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">首次使用点「生成」创建云端数据空间；其他设备填入相同的同步码</div>
+              </div>
+              <div class="field">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                  <input type="checkbox" id="inpSyncEnabled" ${s.enabled ? 'checked' : ''} style="width:18px;height:18px" />
+                  <span class="field-label" style="margin:0">启用自动同步</span>
+                </label>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button class="btn" id="btnTestSync" style="flex:1">🔌 测试连接</button>
+                <button class="btn" id="btnPullNow" style="flex:1">⬇ 立即拉取</button>
+                <button class="btn" id="btnPushNow" style="flex:1">⬆ 立即推送</button>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn" id="btnSyncLink" style="flex:1">🔗 生成同步链接</button>
+              </div>
+              <div id="syncLinkBox" style="display:none;margin-top:8px">
+                <input class="field-input" id="syncLinkUrl" readonly style="font-size:12px" />
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">复制此链接在其他设备/域名打开，可自动配置同步并拉取数据（含凭据，勿公开分享）</div>
+              </div>
+              <div style="margin-top:16px;padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-muted);line-height:1.6">
+                <strong style="color:var(--text)">使用步骤：</strong><br>
+                1. 注册 <a href="https://jsonbin.io" target="_blank" style="color:var(--blue)">jsonbin.io</a>（免费，支持 Google 登录）<br>
+                2. 在 API Keys 页面复制你的 X-Master-Key<br>
+                3. 粘贴到上方 API Key 输入框<br>
+                4. 点「生成」创建同步码<br>
+                5. 勾选「启用自动同步」→ 保存<br>
+                6. 其他设备：点「生成同步链接」→ 复制链接在新设备打开，自动配置<br>
+                <span style="color:var(--text-muted);font-size:12px">打开页面自动拉取，每次修改自动推送（1.5s 防抖）</span>
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn" data-act="close">取消</button>
+              <button class="btn btn-primary" data-act="save">保存</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
+        modal.querySelector('[data-act=save]').addEventListener('click', () => {
+          const wasEnabled = state.sync.enabled;
+          state.sync.apiKey = document.getElementById('inpSyncApiKey').value.trim();
+          state.sync.code = document.getElementById('inpSyncCode').value.trim();
+          state.sync.enabled = document.getElementById('inpSyncEnabled').checked;
+          if (state.sync.enabled && !wasEnabled) cloudPulled = false; // 新启用同步，先拉取再推送
+          persistLocal();
+          closeModal();
+          updateSyncBtn();
+          showToast(state.sync.enabled ? '云同步已启用' : '云同步已关闭');
+          if (state.sync.enabled) syncPull();
+        });
+        modal.querySelector('#btnGenCode')?.addEventListener('click', generateSyncCode);
+        modal.querySelector('#btnTestSync')?.addEventListener('click', testSync);
+        modal.querySelector('#btnPullNow')?.addEventListener('click', () => { syncPull(); showToast('正在拉取…'); });
+        modal.querySelector('#btnPushNow')?.addEventListener('click', () => {
+          if (!cloudPulled) { showToast('请等待云端数据拉取完成后再推送'); return; }
+          clearTimeout(pushTimer);
+          state.sync.status = 'syncing'; updateSyncBtn();
+          fetch(`${JSONBIN_BASE}/${state.sync.code}`, {
+            method: 'PUT',
+            headers: syncHeaders(),
+            body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, updatedAt: new Date().toISOString() })
+          }).then(r => {
+            state.sync.status = r.ok ? 'on' : 'err';
+            updateSyncBtn();
+            showToast(r.ok ? '已推送到云端' : '推送失败');
+          }).catch(() => { state.sync.status = 'err'; updateSyncBtn(); showToast('推送失败'); });
+        });
+        modal.querySelector('#btnSyncLink')?.addEventListener('click', () => {
+          const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || state.sync.apiKey;
+          const code = document.getElementById('inpSyncCode')?.value.trim() || state.sync.code;
+          if (!apiKey || !code) { showToast('请先填写 API Key 和同步码'); return; }
+          const link = `${location.origin}${location.pathname}#sync=${encodeURIComponent(apiKey)}&${encodeURIComponent(code)}`;
+          const box = modal.querySelector('#syncLinkBox');
+          const inp = modal.querySelector('#syncLinkUrl');
+          if (box && inp) { inp.value = link; box.style.display = 'block'; inp.select(); }
+          navigator.clipboard?.writeText(link).then(() => showToast('同步链接已复制到剪贴板')).catch(() => showToast('链接已生成，请手动复制'));
+        });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        return;
+      }
+    }
+
+    /* ============================================================
+     * 顶部按钮：导出 / 导入 / 帮助
+     * ============================================================ */
+
+    // 剩余周数（距活动结束）
+    function remainingWeeks() {
+      if (!state.activityEndDate) return null;
+      const now = new Date(); now.setHours(0,0,0,0);
+      const end = new Date(state.activityEndDate); end.setHours(0,0,0,0);
+      const diff = end - now;
+      if (diff < 0) return 0;
+      return Math.ceil(diff / (7 * 86400000));
+    }
+
+    // CSV 工具：解析一行（支持引号包裹）
+    function parseCsvLine(line) {
+      const result = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQ) {
+          if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else inQ = false; }
+          else cur += ch;
+        } else {
+          if (ch === '"') inQ = true;
+          else if (ch === ',') { result.push(cur); cur = ''; }
+          else cur += ch;
+        }
+      }
+      result.push(cur);
+      return result.map(s => s.trim());
+    }
+
+    // CSV 工具：解析布尔值
+    function parseCsvBool(val) {
+      const v = (val || '').trim().toLowerCase();
+      return ['是', 'true', '1', 'yes', 'y', '✓', '参与'].includes(v);
+    }
+
+    // CSV 工具：解析日常活动进度
+    function parseCsvProgress(val) {
+      const v = (val || '').trim().toLowerCase();
+      if (['进行中', 'in_progress', '进行', 'progress', '进行中'].includes(v)) return 'in_progress';
+      if (['已完成', 'completed', '完成', 'done'].includes(v)) return 'completed';
+      return 'paused'; // 暂停 / paused / 空
+    }
+
+    // CSV 模板下载
+    function downloadCsvTemplate() {
+      const header = '账号名称,UID,服务器,是否参与砺行修远,砺行修远已完成任务数,剩余历练点,是否参与日常活动,日常活动进度\n';
+      const row1  = '主号,100123456,国服,是,3,50.0,是,进行中\n';
+      const row2  = '小号A,100234567,B服,否,0,,是,暂停\n';
+      const row3  = '小号B,100345678,国服,是,8,,否,已完成\n';
+      const note  = '\n'
+        + '# 字段说明：\n'
+        + '# 是否参与砺行修远/日常活动：填 是 或 否\n'
+        + '# 砺行修远已完成任务数：0-8 的整数\n'
+        + '# 剩余历练点：小数，精确到1位（如 50.0），不填则留空\n'
+        + '# 日常活动进度：暂停 / 进行中 / 已完成\n';
+      const csv = header + row1 + row2 + row3 + note;
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = '账号导入模板.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      showToast('模板已下载');
+    }
+
+    // 批量导入 CSV（兼容 UTF-8 / GBK 编码 + 引号字段）
+    function batchImportFromCsv() {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.csv,text/csv';
+      input.onchange = () => {
+        const f = input.files?.[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const buf = new Uint8Array(r.result);
+            // 编码检测：先试 UTF-8，出现替换字符则回退 GBK
+            let text = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+            if (text.includes('\uFFFD')) {
+              text = new TextDecoder('gbk').decode(buf);
+            }
+            // 去 BOM
+            text = text.replace(/^\ufeff/, '');
+            const lines = text.split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
+            if (lines.length < 2) throw new Error('文件为空或只有表头');
+            const rows = lines.slice(1); // 跳过表头
+            let count = 0;
+            rows.forEach(line => {
+              const cols = parseCsvLine(line);
+              if (!cols[0]) return;
+              const tasksDone = Math.min(8, Math.max(0, parseInt(cols[4]) || 0));
+              const finished = tasksDone >= 8;
+              const pts = cols[5] ? parseFloat(cols[5]) : NaN;
+              const acc = {
+                id: uid(),
+                name: cols[0] || '未命名账号',
+                uid: (cols[1] || '').trim(),
+                server: (cols[2] || '国服').trim(),
+                note: '',
+                createdAt: new Date().toISOString(),
+                liXingXiuYuan: {
+                  participated: parseCsvBool(cols[3]),
+                  checkIns: {},
+                  weeks: {},
+                  tasksDone: tasksDone,
+                  finished: finished,
+                  finishedAt: finished ? new Date().toISOString() : null,
+                  remainingPoints: !isNaN(pts) ? Math.round(pts * 10) / 10 : null
+                },
+                dailyActivities: {
+                  participated: parseCsvBool(cols[6]),
+                  progress: parseCsvProgress(cols[7]),
+                  lastChangedAt: null
+                }
+              };
+              state.accounts.push(acc);
+              count++;
+            });
+            saveState();
+            render();
+            showToast(`成功导入 ${count} 个账号`);
+          } catch (e) {
+            alert('导入失败：' + e.message);
+          }
+        };
+        r.readAsArrayBuffer(f);
+      };
+      input.click();
+    }
+
+    function exportData() {
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        accounts: state.accounts
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `genshin-tracker-${todayKey()}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      showToast('已导出 JSON');
+    }
+
+    function importDataFromFile() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/json,.json';
+      input.onchange = () => {
+        const f = input.files?.[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = () => {
+          try {
+            const data = JSON.parse(r.result);
+            if (!Array.isArray(data.accounts)) throw new Error('数据格式不正确');
+            const choice = confirm('导入将覆盖当前账号数据，是否继续？\n确定 = 覆盖导入\n取消 = 合并导入');
+            if (choice) {
+              state.accounts = data.accounts;
+            } else {
+              // 合并：按 id 去重
+              const map = new Map(state.accounts.map(a => [a.id, a]));
+              data.accounts.forEach(a => map.set(a.id, a));
+              state.accounts = [...map.values()];
+            }
+            saveState();
+            render();
+            showToast('导入完成');
+          } catch (e) {
+            alert('导入失败：' + e.message);
+          }
+        };
+        r.readAsText(f);
+      };
+      input.click();
+    }
+
+    /* ============================================================
+     * 云同步 (jsonbin.io)
+     * ============================================================ */
+    const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+
+    function syncHeaders(extra = {}) {
+      return { 'X-Master-Key': state.sync.apiKey, 'Content-Type': 'application/json', ...extra };
+    }
+
+    async function syncPull() {
+      if (!state.sync.enabled || !state.sync.apiKey || !state.sync.code) { cloudPulled = true; return; }
+      state.sync.status = 'syncing'; updateSyncBtn();
+      try {
+        const res = await fetch(`${JSONBIN_BASE}/${state.sync.code}/latest`, {
+          headers: { 'X-Master-Key': state.sync.apiKey }
+        });
+        if (!res.ok) { state.sync.status = 'err'; updateSyncBtn(); cloudPulled = true; return; }
+        const data = await res.json();
+        const record = data.record;
+        if (record && record.accounts) {
+          state.accounts = record.accounts;
+          state.activityEndDate = record.activityEndDate || null;
+          persistLocal();
+          state.sync.status = 'on'; updateSyncBtn();
+          render();
+          showToast('已从云端同步最新数据');
+        } else {
+          state.sync.status = 'on'; updateSyncBtn();
+        }
+      } catch (e) {
+        state.sync.status = 'err'; updateSyncBtn();
+      }
+      cloudPulled = true;
+    }
+
+    let pushTimer = null;
+    function syncPush() {
+      if (!state.sync.enabled || !state.sync.apiKey || !state.sync.code) return;
+      if (!cloudPulled) return; // 首次拉取完成前阻止推送，防止空数据覆盖云端
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(async () => {
+        state.sync.status = 'syncing'; updateSyncBtn();
+        try {
+          const res = await fetch(`${JSONBIN_BASE}/${state.sync.code}`, {
+            method: 'PUT',
+            headers: syncHeaders(),
+            body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, updatedAt: new Date().toISOString() })
+          });
+          state.sync.status = res.ok ? 'on' : 'err';
+        } catch (e) {
+          state.sync.status = 'err';
+        }
+        updateSyncBtn();
+      }, 1500); // 1.5s 防抖
+    }
+
+    async function testSync() {
+      const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || '';
+      const code = document.getElementById('inpSyncCode')?.value.trim() || '';
+      if (!apiKey) { showToast('请输入 API Key'); return; }
+      if (!code) { showToast('请输入同步码（或点「生成」）'); return; }
+      try {
+        const res = await fetch(`${JSONBIN_BASE}/${code}/latest`, {
+          headers: { 'X-Master-Key': apiKey }
+        });
+        if (res.ok) { showToast('✅ 连接成功（云端有数据）'); }
+        else if (res.status === 404) { showToast('✅ 连接成功（暂无云端数据）'); }
+        else { showToast('❌ 连接失败：HTTP ' + res.status); }
+      } catch (e) {
+        showToast('❌ 连接失败：' + e.message);
+      }
+    }
+
+    async function generateSyncCode() {
+      const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || '';
+      if (!apiKey) { showToast('请先输入 API Key'); return; }
+      try {
+        const res = await fetch(JSONBIN_BASE, {
+          method: 'POST',
+          headers: { 'X-Master-Key': apiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, createdAt: new Date().toISOString() })
+        });
+        if (!res.ok) { showToast('创建失败：HTTP ' + res.status); return; }
+        const data = await res.json();
+        const binId = data.metadata?.id;
+        if (binId) {
+          document.getElementById('inpSyncCode').value = binId;
+          showToast('✅ 同步码已生成');
+        } else {
+          showToast('创建成功但未获取到 ID');
+        }
+      } catch (e) {
+        showToast('❌ 创建失败：' + e.message);
+      }
+    }
+
+    function updateSyncBtn() {
+      const btn = document.getElementById('btnSync');
+      if (!btn) return;
+      const s = state.sync;
+      if (!s.enabled) { btn.innerHTML = '☁️'; btn.title = '云同步（未启用）'; return; }
+      const map = { off: '☁️', syncing: '⏳', on: '☁️✓', err: '☁️!' };
+      const tip = { off: '云同步（未启用）', syncing: '云同步中…', on: '云同步已连接', err: '云同步失败' };
+      btn.innerHTML = map[s.status] || '☁️';
+      btn.title = tip[s.status] || '';
+    }
+
+    /* ============================================================
+     * 初始化 & 事件绑定
+     * ============================================================ */
+    function init() {
+      loadState();
+
+      // URL hash 同步配置：#sync=<apiKey>&<code> — 跨域名迁移同步设置
+      const hashMatch = location.hash.match(/^#sync=(.+)&(.+)$/);
+      if (hashMatch) {
+        const [ , encKey, encCode ] = hashMatch;
+        state.sync.apiKey = decodeURIComponent(encKey);
+        state.sync.code = decodeURIComponent(encCode);
+        state.sync.enabled = true;
+        cloudPulled = false; // 阻止推送，等 syncPull 先拉取
+        persistLocal();
+        history.replaceState(null, '', location.pathname);
+        showToast('已从链接导入同步配置，正在拉取云端数据…');
+      }
+
+      render();
+      updateSyncBtn();
+      syncPull(); // 后台拉取，有新数据会自动 re-render
+
+      document.getElementById('btnSync').addEventListener('click', () => {
+        state.modal = 'syncSettings'; render();
+      });
+      document.getElementById('btnHelp').addEventListener('click', () => {
+        state.modal = 'help'; render();
+      });
+      document.getElementById('btnExport').addEventListener('click', exportData);
+      document.getElementById('btnImport').addEventListener('click', importDataFromFile);
+      document.getElementById('btnChangelog').addEventListener('click', () => {
+        state.modal = 'changelog'; render();
+      });
+      // 标签页切换
+      document.getElementById('tabSummary').addEventListener('click', () => switchTab('summary'));
+      document.getElementById('tabAccounts').addEventListener('click', () => switchTab('accounts'));
+    }
+    init();
+
+    // 暴露一些方法给 inline 调用
+    window.openAddAccountModal = openAddAccountModal;
+    window.switchTab = switchTab;
+  </script>
+</body>
+</html>
