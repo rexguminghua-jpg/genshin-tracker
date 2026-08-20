@@ -931,7 +931,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.7.0</span>
+        <span class="version-badge" id="versionBadge">v1.8.0</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -1114,6 +1114,7 @@
         createdAt: new Date().toISOString(),
         liXingXiuYuan: {
           participated: false,
+          focusTraining: false,  // 本周期是否着重练
           checkIns: {},        // { 'YYYY-MM-DD': true }
           weeks: {},           // { 'w_...': count } 本周打卡次数（跨年持久化到下一周清0）
           tasksDone: 0,        // 已完成的砺行修远任务数
@@ -1538,6 +1539,7 @@
               <table class="summary-table">
                 <thead>
                   <tr>
+                    <th style="width:32px;text-align:center">练号</th>
                     <th>账号</th>
                     <th>砺行修远(累计)</th>
                     <th>本周打卡</th>
@@ -1601,6 +1603,7 @@
 
       return `
         <tr class="${rowCls}">
+          <td style="text-align:center;font-size:18px">${m.focusTraining ? '⭐' : ''}</td>
           <td>
             <div class="acct-cell">
               <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
@@ -1850,6 +1853,17 @@
               </label>
             </div>
 
+            <div class="switch-row">
+              <div>
+                <div class="switch-label">⭐ 本周期着重练</div>
+                <div class="switch-help">标注此账号在本砺行修远周期需侧重练号</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" data-toggle="focus" ${m.focusTraining ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+
             <div class="big-stat">
               <div class="stat-box">
                 <div class="stat-num">${tasksDone}</div>
@@ -1979,7 +1993,12 @@
       root.querySelectorAll('[data-toggle]').forEach(input => {
         input.addEventListener('change', () => {
           const k = input.dataset.toggle;
-          toggleParticipate(acc.id, k === 'lxy' ? 'liXingXiuYuan' : 'dailyActivities');
+          if (k === 'focus') {
+            const acc2 = findAccount(acc.id);
+            if (acc2) { acc2.liXingXiuYuan.focusTraining = !acc2.liXingXiuYuan.focusTraining; saveState(); }
+          } else {
+            toggleParticipate(acc.id, k === 'lxy' ? 'liXingXiuYuan' : 'dailyActivities');
+          }
           render();
         });
       });
@@ -2173,6 +2192,14 @@
               <button class="modal-close" data-act="close">✕</button>
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.8.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-20</span></div>
+                <ul style="margin-top:6px">
+                  <li>账号详情页新增「本周期着重练」开关，用于标注本砺行修远周期需侧重练号的账号</li>
+                  <li>汇总页账号进度明细列表最左侧新增「练号」标识列，开启着重练的账号显示 ⭐</li>
+                  <li>迁移到 GitHub Pages 托管，在线版地址永久稳定不再变化</li>
+                </ul>
+              </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.7.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-15</span></div>
                 <ul style="margin-top:6px">
