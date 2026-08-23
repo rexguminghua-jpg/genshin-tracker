@@ -1640,22 +1640,12 @@
       saveState();
     }
 
-    // 切换本周参与（开启时弹确认）
-    function toggleWeekParticipate(id) {
+    // 切换本周参与（在事件绑定中根据 checkbox 即将变为的状态调用）
+    function setWeekParticipate(id, on) {
       const acc = findAccount(id);
       if (!acc) return;
-      const m = acc.liXingXiuYuan;
-      if (!m.weekParticipated) {
-        // 关闭 → 直接关闭
-        m.weekParticipated = false;
-        saveState();
-      } else {
-        // 开启 → 二次确认
-        if (confirm('确定要开启本周砺行修远活动吗？开启后可继续打卡。')) {
-          m.weekParticipated = true;
-          saveState();
-        }
-      }
+      acc.liXingXiuYuan.weekParticipated = !!on;
+      saveState();
     }
 
     /* ============================================================
@@ -2274,12 +2264,23 @@
           if (k === 'focus') {
             acc.liXingXiuYuan.focusTraining = !acc.liXingXiuYuan.focusTraining;
             saveState();
+            render();
           } else if (k === 'lxy') {
             toggleParticipate(acc.id, 'liXingXiuYuan');
           } else if (k === 'lxyWeek') {
-            toggleWeekParticipate(acc.id);
+            if (input.checked) {
+              // 即将开启 → 二次确认
+              if (confirm('确定要开启本周砺行修远活动吗？开启后可继续打卡。')) {
+                setWeekParticipate(acc.id, true);
+              } else {
+                // 取消 → 恢复 checkbox 状态
+                input.checked = false;
+              }
+            } else {
+              // 关闭 → 直接关闭（不弹确认，避免误触）
+              setWeekParticipate(acc.id, false);
+            }
           }
-          render();
         });
       });
       // checkin
