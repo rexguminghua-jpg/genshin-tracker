@@ -1212,7 +1212,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.9</span>
+        <span class="version-badge" id="versionBadge">v1.9.10</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2796,6 +2796,14 @@
               <button class="modal-close" data-act="close">✕</button>
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.10 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>修复</strong>：v1.9.9 更新日志文案里误用反引号包裹了 taskColor / weekColor 这两个标识符名，正好落在 JS 模板字符串内部，导致整段 <code>&lt;script&gt;</code> 加载即抛 <code>SyntaxError: Unexpected identifier</code>，应用 JS 完全未运行 → 页面所有交互失效、列表区空白</li>
+                  <li>本次紧急热修：把 changelog 文本里的反引号换成普通字符，并跑完整端到端渲染测试确认主流程恢复</li>
+                  <li>经验：JS 模板字符串里如要展示代码标识符请用普通字符或 HTML 实体 <code>&amp;#96;</code>，避免 SyntaxError</li>
+                </ul>
+              </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.9 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
                 <ul style="margin-top:6px">
