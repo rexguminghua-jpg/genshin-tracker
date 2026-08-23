@@ -169,6 +169,11 @@
       background: rgba(201, 69, 69, 0.04);
     }
     .btn-danger:hover { background: rgba(201, 69, 69, 0.1); }
+    .btn-warn {
+      color: var(--orange); border-color: rgba(215, 122, 60, 0.35);
+      background: rgba(215, 122, 60, 0.06);
+    }
+    .btn-warn:hover { background: rgba(215, 122, 60, 0.14); }
     .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 8px; }
 
     .account-grid {
@@ -636,6 +641,8 @@
     .dc-expected { font-size: 13px; font-weight: 600; white-space: nowrap; }
     .dc-expected.ok { color: var(--green); }
     .dc-expected.bad { color: var(--red); }
+    .dc-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+    .dc-actions .btn { white-space: nowrap; }
     .modal-foot {
       padding: 12px 22px 18px;
       display: flex; gap: 10px; justify-content: flex-end;
@@ -1224,7 +1231,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.11</span>
+        <span class="version-badge" id="versionBadge">v1.9.12</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -1664,6 +1671,25 @@
         saveState();
       }
       return { before, after, changed: before !== after };
+    }
+
+    // 检测「本周参与被误关」：v1.9.0/1.9.1 该开关默认关闭，导致打卡被拦截、次数无法记录；
+    // v1.9.2 迁移只翻了 null→true，未翻回那些被错误默认成 false 的账号。本期参与开启但本周参与关闭，即为疑似误关。
+    function needsWeekRepair(acc) {
+      const m = acc.liXingXiuYuan;
+      return !!(m.participated && !m.weekParticipated);
+    }
+
+    // 修复「本周参与被误关」：开启本周参与，恢复打卡记录能力（不改动任何打卡/进度数据）
+    function repairWeekParticipate(id) {
+      const acc = findAccount(id);
+      if (!acc) return null;
+      const m = acc.liXingXiuYuan;
+      if (m.weekParticipated) return { changed: false };
+      m.weekParticipated = true;
+      saveState();
+      if (typeof syncPush === 'function') syncPush();
+      return { changed: true };
     }
 
     // 历练点颜色阈值
@@ -2860,6 +2886,20 @@
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.12 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>根因修复</strong>：确认「本周是否参与」开关在 v1.9.0/1.9.1 默认关闭，导致这些账号打卡被拦截、砺行修远次数无法记录；v1.9.2 虽把新建账号默认改为开启，但旧数据迁移只翻了 <code>null → true</code>，未翻回那些被错误默认成 <code>false</code> 的账号</li>
+                  <li><strong>数据自检增强</strong>：🔧 面板新增「本周参与被误关」检测——识别「本期参与开启但本周参与关闭」的疑似误关账号（整期暂停的账号正确排除），支持单账号「开启本周」与「一键修复全部异常」</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.11 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>总任务进度校准</strong>：新增 🔧 数据自检面板，逐账号对比「当前记录值」与「按打卡记录重算应得值」，支持单账号修复与一键修复全部异常</li>
+                  <li>校准算法：遍历打卡记录按自然周分组，满 5 次的周数即已完成任务数，封顶 8，并同步维护收官标志</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.10 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
                 <ul style="margin-top:6px">
                   <li><strong>修复</strong>：v1.9.9 更新日志文案里误用反引号包裹了 taskColor / weekColor 这两个标识符名，正好落在 JS 模板字符串内部，导致整段 <code>&lt;script&gt;</code> 加载即抛 <code>SyntaxError: Unexpected identifier</code>，应用 JS 完全未运行 → 页面所有交互失效、列表区空白</li>
@@ -3142,40 +3182,47 @@
       if (state.modal === 'dataCheck') {
         modal = document.createElement('div');
         modal.className = 'modal-mask';
-        const issues = state.accounts.filter(a => (a.liXingXiuYuan.tasksDone || 0) !== recalcTasksDone(a));
+        const rows = state.accounts.map(acc => {
+          const m = acc.liXingXiuYuan;
+          const current = m.tasksDone || 0;
+          const expected = recalcTasksDone(acc);
+          const taskBad = current !== expected;
+          const weekBad = needsWeekRepair(acc);
+          return { acc, m, current, expected, taskBad, weekBad, bad: taskBad || weekBad };
+        });
+        const issueCount = rows.filter(r => r.bad).length;
         modal.innerHTML = `
-          <div class="modal" onclick="event.stopPropagation()" style="max-width:680px">
+          <div class="modal" onclick="event.stopPropagation()" style="max-width:700px">
             <div class="modal-head">
-              <div class="modal-title">🔧 数据自检 · 总任务进度</div>
+              <div class="modal-title">🔧 数据自检 · 进度与开关</div>
               <button class="modal-close" data-act="close">✕</button>
             </div>
             <div class="modal-body">
               <div class="help-note" style="margin-bottom:12px">
-                每行对比「当前记录的总任务进度」与「按打卡记录重算的应得值」。不一致即为异常（多由撤销/重置/补打卡组合或旧版本迁移导致）。点击「修复」或底部「一键修复」即可纠正。
+                检测两类异常：① <b>总任务进度</b>与按打卡记录重算值不一致（多由撤销/重置/补打卡或旧版本迁移导致）；② <b>本周参与被误关</b>——v1.9.0/1.9.1 该开关默认关闭，导致打卡被拦截、次数无法记录（v1.9.2 迁移未翻回）。点击「修复 / 开启」或底部「一键修复」即可纠正。
               </div>
               ${state.accounts.length === 0 ? '<div class="empty-state-title">还没有账号</div>' : `
                 <div class="dc-table">
-                  ${state.accounts.map(acc => {
-                    const m = acc.liXingXiuYuan;
-                    const current = m.tasksDone || 0;
-                    const expected = recalcTasksDone(acc);
-                    const ok = current === expected;
-                    const totalCheckIns = Object.values(m.checkIns || {}).filter(Boolean).length;
-                    return `
-                      <div class="dc-row ${ok ? '' : 'dc-bad'}">
-                        <div class="dc-name">${escapeHtml(acc.name)}${acc.uid ? ` <span class="dc-uid">${escapeHtml(acc.uid)}</span>` : ''}</div>
-                        <div class="dc-stat">记录 ${current}/${TASK_TOTAL_REQUIRED} · 累计打卡 ${totalCheckIns} 次</div>
-                        <div class="dc-expected ${ok ? 'ok' : 'bad'}">${ok ? '✓ 正常' : `⚠ 应得 ${expected}/${TASK_TOTAL_REQUIRED}`}</div>
-                        ${ok ? '' : `<button class="btn btn-sm btn-primary" data-fix-one="${acc.id}">修复</button>`}
+                  ${rows.map(r => `
+                    <div class="dc-row ${r.bad ? 'dc-bad' : ''}">
+                      <div class="dc-name">${escapeHtml(r.acc.name)}${r.acc.uid ? ` <span class="dc-uid">${escapeHtml(r.acc.uid)}</span>` : ''}</div>
+                      <div class="dc-stat">记录 ${r.current}/${TASK_TOTAL_REQUIRED} · 累计打卡 ${(Object.values(r.m.checkIns || {}).filter(Boolean)).length} 次</div>
+                      <div class="dc-expected">
+                        ${r.taskBad ? `<span class="bad">⚠ 进度应得 ${r.expected}/${TASK_TOTAL_REQUIRED}</span>` : `<span class="ok">✓ 进度正常</span>`}
+                        ${r.weekBad ? `<br><span class="bad">⚠ 本周参与被误关（打卡被拦截）</span>` : ''}
                       </div>
-                    `;
-                  }).join('')}
+                      <div class="dc-actions">
+                        ${r.taskBad ? `<button class="btn btn-sm btn-primary" data-fix-one="${r.acc.id}">修复进度</button>` : ''}
+                        ${r.weekBad ? `<button class="btn btn-sm btn-warn" data-week-fix="${r.acc.id}">开启本周</button>` : ''}
+                      </div>
+                    </div>
+                  `).join('')}
                 </div>
               `}
             </div>
             <div class="modal-foot">
               <button class="btn" data-act="close">关闭</button>
-              <button class="btn btn-primary" id="btnFixAll">${issues.length ? `✅ 一键修复 ${issues.length} 个异常` : '✓ 全部正常'}</button>
+              <button class="btn btn-primary" id="btnFixAll">${issueCount ? `✅ 一键修复 ${issueCount} 个异常` : '✓ 全部正常'}</button>
             </div>
           </div>
         `;
@@ -3183,15 +3230,23 @@
         modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
         modal.querySelectorAll('[data-fix-one]').forEach(b => b.addEventListener('click', () => {
           const r = calibrateAccount(b.dataset.fixOne);
-          if (r && r.changed) showToast(`已校准：${r.before} → ${r.after}`);
+          if (r && r.changed) showToast(`已校准进度：${r.before} → ${r.after}`);
+          render();
+        }));
+        modal.querySelectorAll('[data-week-fix]').forEach(b => b.addEventListener('click', () => {
+          const r = repairWeekParticipate(b.dataset.weekFix);
+          if (r && r.changed) showToast('已开启本周参与，打卡已恢复正常');
           render();
         }));
         const btnFixAll = modal.querySelector('#btnFixAll');
         if (btnFixAll) btnFixAll.addEventListener('click', () => {
-          if (issues.length === 0) { showToast('✓ 所有账号数据正常'); return; }
+          if (issueCount === 0) { showToast('✓ 所有账号数据正常'); return; }
           let n = 0;
-          state.accounts.forEach(a => { const r = calibrateAccount(a.id); if (r && r.changed) n++; });
-          showToast(n > 0 ? `✅ 已修复 ${n} 个账号的总任务进度` : '✓ 全部正常');
+          state.accounts.forEach(a => {
+            const r1 = calibrateAccount(a.id); if (r1 && r1.changed) n++;
+            const r2 = repairWeekParticipate(a.id); if (r2 && r2.changed) n++;
+          });
+          showToast(n > 0 ? `✅ 已修复 ${n} 项异常` : '✓ 全部正常');
           render();
         });
         modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
