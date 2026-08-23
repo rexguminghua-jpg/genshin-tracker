@@ -344,7 +344,7 @@
       min-width: 0;
     }
     .triple-cell-title {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--text-muted);
       letter-spacing: 0.5px;
@@ -353,13 +353,21 @@
       display: flex; align-items: center; gap: 4px;
     }
     .lixy-triple-cell .switch-row {
-      padding: 0;
-      gap: 8px;
+      padding: 6px 0;
+      gap: 10px;
     }
-    .lixy-triple-cell .switch-label { font-size: 12px; font-weight: 600; }
+    .lixy-triple-cell .switch-label { font-size: 14px; font-weight: 700; }
     .lixy-triple-cell .switch-help { font-size: 11px; }
-    .lixy-triple-cell .stat-box { padding: 10px; }
-    .lixy-triple-cell .stat-num { font-size: 24px; }
+    .lixy-triple-cell .stat-box {
+      padding: 12px 10px;
+      gap: 4px;
+    }
+    .lixy-triple-cell .stat-num {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.1;
+      transition: color 0.3s ease;
+    }
     .lixy-triple-cell .stat-label { font-size: 11px; }
     .lixy-triple-cell .points-field {
       flex-direction: column;
@@ -370,8 +378,13 @@
       border: none;
       margin-bottom: 0;
     }
-    .lixy-triple-cell .points-field-label { font-size: 13px; }
-    .lixy-triple-cell .points-input { width: 100%; }
+    .lixy-triple-cell .points-field-label { font-size: 15px; font-weight: 700; }
+    .lixy-triple-cell .points-input {
+      width: 100%;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 8px 10px;
+    }
     .lixy-triple-cell .points-prompt { margin-left: 0; }
     @media (max-width: 720px) {
       .detail-tabs-inline { max-width: none; }
@@ -1342,6 +1355,14 @@
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // 进度配色：0 灰；进行中 红(0) → 绿(120) 色相线性渐变；100% 金绿加粗
+    function progressHue(ratio) {
+      if (ratio <= 0)  return 'hsl(220, 10%, 60%)';        // 未开始：灰
+      if (ratio >= 1)  return 'hsl(95, 55%, 38%)';         // 已完成：金绿
+      const hue = Math.round(ratio * 120);                  // 0 红 → 120 绿
+      return `hsl(${hue}, 65%, 42%)`;
+    }
+
     function accountAvatarColor(name) {
       const palette = [
         ['#d4a849', '#a8802a'],
@@ -2208,6 +2229,12 @@
       const today = todayKey();
       const tasksDone = m.tasksDone || 0;
 
+      // 进度配色：0 灰色 / 进行中 红→绿 HSL 渐变 / 100% 金绿色
+      const taskRatio  = Math.max(0, Math.min(1, tasksDone / TASK_TOTAL_REQUIRED));
+      const weekRatio  = Math.max(0, Math.min(1, weekCount / CHECKINS_PER_TASK));
+      const taskColor  = progressHue(taskRatio);
+      const weekColor  = progressHue(weekRatio);
+
       // 周日历(显示 7 天，我们只显示 周一到周日 5 个打卡格子太高，这里用 5 个表示进度)
       // 实际上"一周打卡 5 次"不一定要连号，所以直接展示成 5 个槽位。
       const weekDays = getWeekDays();
@@ -2297,11 +2324,11 @@
             <div class="lixy-triple-cell">
               <div class="triple-cell-title">📊 进度统计</div>
               <div class="stat-box">
-                <div class="stat-num">${tasksDone}</div>
+                <div class="stat-num" style="color:${taskColor}">${tasksDone}</div>
                 <div class="stat-label">任务进度（/${TASK_TOTAL_REQUIRED}）</div>
               </div>
               <div class="stat-box">
-                <div class="stat-num">${weekCount}</div>
+                <div class="stat-num" style="color:${weekColor}">${weekCount}</div>
                 <div class="stat-label">本周打卡（/${CHECKINS_PER_TASK}）</div>
               </div>
             </div>
