@@ -285,10 +285,98 @@
       border: 1px solid var(--border);
       color: var(--text-muted);
       transition: all .15s;
+      flex: 0 0 auto;
     }
     .back-btn:hover { color: var(--text); transform: translateX(-2px); }
     .detail-head h2 { font-size: 20px; font-weight: 700; }
     .detail-sub { color: var(--text-muted); font-size: 13px; }
+    .detail-head-info { min-width: 0; flex: 0 1 auto; }
+    /* 详情页 Tab 嵌入顶栏中间 */
+    .detail-tabs-inline {
+      flex: 1 1 auto;
+      display: flex;
+      gap: 6px;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .detail-tabs-inline .detail-tab {
+      flex: 1;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 9px;
+      color: var(--text-muted);
+      text-align: center;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .detail-tabs-inline .detail-tab:hover { color: var(--text); }
+    .detail-tabs-inline .detail-tab.active.gold {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(212, 168, 73, 0.3);
+    }
+    .detail-tabs-inline .detail-tab.active.blue {
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+    }
+    /* 砺行修远三栏 1:1:1 区域 */
+    .lixy-triple {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .lixy-triple-cell {
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex; flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+    .triple-cell-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .lixy-triple-cell .switch-row {
+      padding: 0;
+      gap: 8px;
+    }
+    .lixy-triple-cell .switch-label { font-size: 12px; font-weight: 600; }
+    .lixy-triple-cell .switch-help { font-size: 11px; }
+    .lixy-triple-cell .stat-box { padding: 10px; }
+    .lixy-triple-cell .stat-num { font-size: 24px; }
+    .lixy-triple-cell .stat-label { font-size: 11px; }
+    .lixy-triple-cell .points-field {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      margin-bottom: 0;
+    }
+    .lixy-triple-cell .points-field-label { font-size: 13px; }
+    .lixy-triple-cell .points-input { width: 100%; }
+    .lixy-triple-cell .points-prompt { margin-left: 0; }
+    @media (max-width: 720px) {
+      .detail-tabs-inline { max-width: none; }
+      .lixy-triple { grid-template-columns: 1fr; }
+    }
 
     .module-card {
       padding: 22px;
@@ -1111,7 +1199,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.6</span>
+        <span class="version-badge" id="versionBadge">v1.9.7</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2130,20 +2218,15 @@
       root.innerHTML = `
         <div class="detail-head">
           <button class="back-btn" id="btnBack">←</button>
-          <div style="flex:1;min-width:0">
+          <div class="detail-head-info">
             <h2>${escapeHtml(acc.name)}${m.focusTraining ? ' <span style="color:var(--gold)">⭐</span>' : ''}</h2>
             <div class="detail-sub">${acc.uid ? `UID ${escapeHtml(acc.uid)} · ` : ''}${escapeHtml(acc.server)}${acc.note ? ` · ${escapeHtml(acc.note)}` : ''}</div>
           </div>
+          <div class="detail-tabs-inline">
+            <button class="detail-tab ${isLixy ? 'active gold' : ''}" data-detail-tab="lixy">📜 砺行修远</button>
+            <button class="detail-tab ${!isLixy ? 'active blue' : ''}" data-detail-tab="daily">🌿 日常活动</button>
+          </div>
           <button class="btn btn-sm" id="btnEditInline">编辑</button>
-        </div>
-
-        <div class="detail-tabs">
-          <button class="detail-tab ${isLixy ? 'active gold' : ''}" data-detail-tab="lixy">
-            📜 砺行修远
-          </button>
-          <button class="detail-tab ${!isLixy ? 'active blue' : ''}" data-detail-tab="daily">
-            🌿 日常活动
-          </button>
         </div>
 
         ${isLixy ? renderDetailLixy(acc, m, weekCount, isTodayDone, today, tasksDone, weekDays)
@@ -2173,49 +2256,68 @@
 
       return `
         <section class="card module-card">
-          <div class="module-head">
-            <div class="module-title-wrap">
-              <div class="module-icon lixy">📜</div>
-              <div>
-                <div class="module-title">砺行修远</div>
-                <div class="module-sub">每周打卡 ${CHECKINS_PER_TASK} 次 → 完成 1 个任务 · 共 ${TASK_TOTAL_REQUIRED} 次 · 每日5点重置</div>
+          <!-- 三栏 1:1:1 区域：左=3 控制开关 / 中=进度统计 / 右=历练点 -->
+          <div class="lixy-triple">
+            <!-- 左：3 个控制开关 -->
+            <div class="lixy-triple-cell">
+              <div class="triple-cell-title">⚙ 控制开关</div>
+              <div class="switch-row">
+                <div>
+                  <div class="switch-label">本期是否参与</div>
+                  <div class="switch-help">活动周期总开关</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" data-toggle="lxy" ${m.participated ? 'checked' : ''}>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="switch-row">
+                <div>
+                  <div class="switch-label">本周是否参与</div>
+                  <div class="switch-help">关闭=本周暂停</div>
+                </div>
+                <label class="switch switch-blue">
+                  <input type="checkbox" data-toggle="lxyWeek" ${m.weekParticipated ? 'checked' : ''} ${!m.participated ? 'disabled' : ''}>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="switch-row">
+                <div>
+                  <div class="switch-label">⭐ 本周期重点</div>
+                  <div class="switch-help">汇总页显示星标</div>
+                </div>
+                <label class="switch switch-orange">
+                  <input type="checkbox" data-toggle="focus" ${m.focusTraining ? 'checked' : ''}>
+                  <span class="switch-slider"></span>
+                </label>
               </div>
             </div>
-          </div>
 
-          <!-- 顶部 3 个开关 -->
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:8px 12px;background:var(--card-strong);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">
-            <div class="switch-row" style="padding:0;flex-direction:column;align-items:flex-start;gap:8px">
-              <div class="switch-label" style="font-weight:600">本期是否参与</div>
-              <label class="switch">
-                <input type="checkbox" data-toggle="lxy" ${m.participated ? 'checked' : ''}>
-                <span class="switch-slider"></span>
-              </label>
+            <!-- 中：进度统计 -->
+            <div class="lixy-triple-cell">
+              <div class="triple-cell-title">📊 进度统计</div>
+              <div class="stat-box">
+                <div class="stat-num">${tasksDone}</div>
+                <div class="stat-label">任务进度（/${TASK_TOTAL_REQUIRED}）</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-num">${weekCount}</div>
+                <div class="stat-label">本周打卡（/${CHECKINS_PER_TASK}）</div>
+              </div>
             </div>
-            <div class="switch-row" style="padding:0;flex-direction:column;align-items:flex-start;gap:8px;border-left:1px solid var(--border);padding-left:14px">
-              <div class="switch-label" style="font-weight:600">本周是否参与</div>
-              <label class="switch switch-blue">
-                <input type="checkbox" data-toggle="lxyWeek" ${m.weekParticipated ? 'checked' : ''} ${!m.participated ? 'disabled' : ''}>
-                <span class="switch-slider"></span>
-              </label>
-            </div>
-            <div class="switch-row" style="padding:0;flex-direction:column;align-items:flex-start;gap:8px;border-left:1px solid var(--border);padding-left:14px">
-              <div class="switch-label" style="font-weight:600">⭐ 本周期重点</div>
-              <label class="switch switch-orange">
-                <input type="checkbox" data-toggle="focus" ${m.focusTraining ? 'checked' : ''}>
-                <span class="switch-slider"></span>
-              </label>
-            </div>
-          </div>
 
-          <div class="big-stat">
-            <div class="stat-box">
-              <div class="stat-num">${tasksDone}</div>
-              <div class="stat-label">任务进度（/${TASK_TOTAL_REQUIRED}）</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-num">${weekCount}</div>
-              <div class="stat-label">本周打卡（/${CHECKINS_PER_TASK}）</div>
+            <!-- 右：历练点 -->
+            <div class="lixy-triple-cell">
+              <div class="triple-cell-title">💎 历练点</div>
+              <div class="points-field">
+                <span class="points-field-label">剩余历练点</span>
+                <input type="number" class="points-input ${ps ? ps.cls : ''}" id="inpRemainingPoints"
+                  value="${m.remainingPoints != null ? m.remainingPoints : ''}"
+                  step="0.1" min="0" placeholder="0.0"
+                  onwheel="this.blur()" />
+                <span class="points-field-help">手动输入，精确至小数点后 1 位</span>
+                ${ps && ps.prompt ? `<span class="points-prompt ${ps.promptCls}">${ps.prompt}</span>` : ''}
+              </div>
             </div>
           </div>
 
@@ -2233,16 +2335,6 @@
                       : '点击「打卡」记录今天任务，或点击下方日历中过去未打卡的日期补打。'
             }
             <br><span style="font-size:11px;color:var(--text-faint)">打卡周期：每日凌晨5点重置（5:00~次日4:59为一天）</span>
-          </div>
-
-          <div class="points-field">
-            <span class="points-field-label">剩余历练点</span>
-            <input type="number" class="points-input ${ps ? ps.cls : ''}" id="inpRemainingPoints"
-              value="${m.remainingPoints != null ? m.remainingPoints : ''}"
-              step="0.1" min="0" placeholder="0.0"
-              onwheel="this.blur()" />
-            <span class="points-field-help">手动输入，精确至小数点后 1 位</span>
-            ${ps && ps.prompt ? `<span class="points-prompt ${ps.promptCls}">${ps.prompt}</span>` : ''}
           </div>
 
           <div class="lixy-body">
@@ -2366,16 +2458,6 @@
       stygian = stygian || { participated: false };
       return `
         <section class="card module-card">
-          <div class="module-head">
-            <div class="module-title-wrap">
-              <div class="module-icon daily">🌿</div>
-              <div>
-                <div class="module-title">日常活动</div>
-                <div class="module-sub">暂停 → 进行中 → 已完成 · 共 4 个子模块</div>
-              </div>
-            </div>
-          </div>
-
           <!-- 子区块 1：日常活动 -->
           <div class="sub-section">
             <div class="sub-section-head">
@@ -2688,7 +2770,7 @@
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.6 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.7 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
                 <ul style="margin-top:6px">
                   <li><strong>布局改造</strong>：砺行修远打卡区改为左右布局——左侧显示<b>当月日历</b>，含「今天」所在当周高亮、其余周灰显、已打卡日期下方金色圆点标记；右侧按钮竖排（今日打卡 / 撤销打卡 / 重置本周 / 重置全部）</li>
                   <li>当月日历中，当前周「过去未打卡」的日期仍可点击补打，其余周只读灰显</li>
