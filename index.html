@@ -118,13 +118,6 @@
     }
     .icon-btn:hover { background: var(--card-strong); color: var(--text); transform: translateY(-1px); }
 
-    /* ========== 布局容器 ========== */
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 24px 20px 40px;
-    }
-
     /* ========== 卡片通用 ========== */
     .card {
       background: var(--card);
@@ -297,15 +290,6 @@
     .back-btn:hover { color: var(--text); transform: translateX(-2px); }
     .detail-head h2 { font-size: 20px; font-weight: 700; }
     .detail-sub { color: var(--text-muted); font-size: 13px; }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 720px) {
-      .detail-grid { grid-template-columns: 1fr; }
-    }
 
     .module-card {
       padding: 22px;
@@ -593,7 +577,6 @@
 
     /* 移动端 */
     @media (max-width: 600px) {
-      .container { padding: 16px 12px 30px; }
       .account-grid { grid-template-columns: 1fr; }
       .topbar-inner { padding: 10px 14px; }
       .brand { font-size: 16px; }
@@ -740,6 +723,7 @@
       color: var(--gold-deep);
     }
     .cal-cell.future { opacity: 0.35; }
+    .cal-cell.dimmed { opacity: 0.55; filter: grayscale(0.4); }
     .cal-day-name { font-size: 10px; opacity: 0.8; }
     .cal-day-num { font-size: 14px; font-weight: 700; }
     .cal-status { font-size: 12px; font-weight: 700; min-height: 14px; }
@@ -822,30 +806,6 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     .sync-status-text { font-size: 13px; color: var(--text-muted); }
 
-    /* ========== 标签页导航 ========== */
-    .tab-bar {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      gap: 2px;
-    }
-    .tab-btn {
-      padding: 10px 22px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-bottom: 2.5px solid transparent;
-      transition: all .15s;
-      position: relative;
-      bottom: -1px;
-    }
-    .tab-btn:hover { color: var(--text); }
-    .tab-btn.active {
-      color: var(--gold-deep);
-      border-bottom-color: var(--gold);
-    }
-
     /* ========== 汇总页表格 ========== */
     .summary-table-wrap {
       overflow-x: auto;
@@ -921,17 +881,213 @@
       .summary-table { font-size: 12px; }
       .summary-table th, .summary-table td { padding: 8px 10px; }
       .mini-bar { width: 36px; }
-      .tab-btn { padding: 8px 14px; font-size: 13px; }
+    }
+
+    /* ========== 侧边栏布局 ========== */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 20px;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+      align-items: start;
+    }
+    .sidebar {
+      position: sticky;
+      top: 84px;
+      background: var(--card);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-faint);
+      letter-spacing: 1px;
+      padding: 0 8px 8px;
+      text-transform: uppercase;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all .15s;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.7); color: var(--text); }
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(212,168,73,0.15), rgba(60,108,176,0.10));
+      color: var(--gold-deep);
+      box-shadow: 0 2px 6px rgba(212,168,73,0.10);
+    }
+    .nav-item .icon { font-size: 16px; }
+    .nav-badge {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+    .main-content { min-width: 0; }
+
+    /* ========== 移动端汉堡菜单 ========== */
+    .hamburger-btn {
+      display: none;
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      place-items: center;
+      cursor: pointer;
+    }
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 30, 50, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 90;
+      animation: fadeIn .15s ease;
+    }
+    @media (max-width: 720px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+        padding: 16px 12px 30px;
+        gap: 0;
+      }
+      .sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        width: 240px;
+        z-index: 100;
+        border-radius: 0;
+        border: none;
+        border-right: 1px solid var(--border);
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        box-shadow: var(--shadow-lg);
+        padding-top: 70px;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.show { display: block; }
+      .hamburger-btn { display: grid; }
+      .sidebar-title { display: none; }
+    }
+
+    /* ========== 详情页顶部 Tab ========== */
+    .detail-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--gray-soft);
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+    .detail-tab {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-radius: 9px;
+      text-align: center;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .detail-tab:hover { color: var(--text); }
+    .detail-tab.active {
+      background: var(--card-strong);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-weight: 700;
+    }
+    .detail-tab.active.gold { color: var(--gold-deep); }
+    .detail-tab.active.blue { color: var(--blue); }
+
+    /* ========== 日常活动子区块 ========== */
+    .sub-section {
+      padding: 18px 0;
+      border-top: 1px dashed var(--border);
+    }
+    .sub-section:first-child {
+      border-top: none;
+      padding-top: 4px;
+    }
+    .sub-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0 8px;
+    }
+    .sub-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .sub-section-title .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .sub-section-body {
+      padding: 12px 0 4px;
+    }
+
+    /* ========== 选择器（下拉对） ========== */
+    .select-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .select-pair label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    @media (max-width: 600px) {
+      .select-pair { grid-template-columns: 1fr; }
+    }
+
+    /* ========== 开关辅助色 ========== */
+    .switch-blue-2 input:checked + .switch-slider {
+      background: linear-gradient(135deg, var(--teal), #2d807d);
+    }
+    .switch-purple input:checked + .switch-slider {
+      background: linear-gradient(135deg, #7a5cc0, #5241a0);
+    }
+    .switch-orange input:checked + .switch-slider {
+      background: linear-gradient(135deg, var(--orange), #9a5526);
     }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
+      <button class="hamburger-btn" id="btnHamburger" title="菜单">☰</button>
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.8.0</span>
+        <span class="version-badge" id="versionBadge">v1.9.0</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -942,13 +1098,23 @@
         <button class="icon-btn" id="btnImport" title="导入数据">⬆</button>
       </div>
     </div>
-    <nav class="tab-bar" id="tabBar">
-      <button class="tab-btn active" id="tabSummary" data-tab="summary">📊 汇总</button>
-      <button class="tab-btn" id="tabAccounts" data-tab="accounts">🎮 账号</button>
-    </nav>
   </header>
 
-  <main class="container" id="root"></main>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-title">主导航</div>
+      <button class="nav-item" data-nav="summary">
+        <span class="icon">📊</span>
+        <span>汇总</span>
+      </button>
+      <button class="nav-item" data-nav="accounts">
+        <span class="icon">🎮</span>
+        <span>账号</span>
+      </button>
+    </aside>
+    <main class="main-content" id="root"></main>
+  </div>
 
   <script>
     /* ============================================================
@@ -967,9 +1133,11 @@
       tab: 'summary',      // 'summary' | 'accounts'
       view: 'list',        // 'list' | 'detail' (accounts tab 内部)
       activeId: null,
+      detailTab: 'lixy',   // 'lixy' | 'daily' (详情页内部)
       modal: null,         // 'addAccount' | 'editAccount' | 'help' | 'changelog' | 'syncSettings' | null
       modalCtx: {},
-      sync: { apiKey: '', code: '', enabled: false, status: 'off' }  // 'off' | 'syncing' | 'on' | 'err'
+      sync: { apiKey: '', code: '', enabled: false, status: 'off' },  // 'off' | 'syncing' | 'on' | 'err'
+      mobileSidebarOpen: false
     };
 
     // 防止空数据覆盖云端：首次拉取完成前阻止推送
@@ -980,7 +1148,7 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          state.accounts = Array.isArray(parsed.accounts) ? parsed.accounts : [];
+          state.accounts = Array.isArray(parsed.accounts) ? parsed.accounts.map(migrateAccount) : [];
           state.activityEndDate = parsed.activityEndDate || null;
           if (parsed.sync) {
             // 旧格式迁移：有 url 无 apiKey → 重置同步配置
@@ -1113,23 +1281,50 @@
         note: payload.note?.trim() || '',
         createdAt: new Date().toISOString(),
         liXingXiuYuan: {
-          participated: false,
-          focusTraining: false,  // 本周期是否着重练
-          checkIns: {},        // { 'YYYY-MM-DD': true }
-          weeks: {},           // { 'w_...': count } 本周打卡次数（跨年持久化到下一周清0）
-          tasksDone: 0,        // 已完成的砺行修远任务数
-          finished: false,     // 8 次任务全完成标记
+          participated: false,        // 本期是否参与
+          weekParticipated: false,    // 本周是否参与（可独立于本期参与开关）
+          focusTraining: false,       // 本周期着重练
+          checkIns: {},               // { 'YYYY-MM-DD': true }
+          weeks: {},                  // { 'w_...': count } 本周打卡次数（跨年持久化到下一周清0）
+          tasksDone: 0,               // 已完成的砺行修远任务数
+          finished: false,            // 8 次任务全完成标记
           finishedAt: null,
-          remainingPoints: null // 剩余历练点（手动输入，精确至小数点后1位）
+          remainingPoints: null       // 剩余历练点（手动输入，精确至小数点后1位）
         },
         dailyActivities: {
           participated: false,
           progress: 'paused',
           lastChangedAt: null
+        },
+        // v1.9.0 新增：深境螺旋
+        spiralAbyss: {
+          participated: false,
+          currentFloor: 1,    // 1-12
+          currentChamber: 1,  // 1-3
+          completed: false    // 当期已通关
+        },
+        // v1.9.0 新增：幻想真境剧诗
+        imaginationTheatre: {
+          participated: false
+        },
+        // v1.9.0 新增：幽境危战
+        stygianOnslaught: {
+          participated: false
         }
       };
       state.accounts.push(acc);
       saveState();
+      return acc;
+    }
+
+    // 为旧数据补齐缺失字段（迁移兼容）
+    function migrateAccount(acc) {
+      if (!acc.liXingXiuYuan) acc.liXingXiuYuan = {};
+      if (acc.liXingXiuYuan.weekParticipated == null) acc.liXingXiuYuan.weekParticipated = false;
+      if (!acc.dailyActivities) acc.dailyActivities = { participated: false, progress: 'paused', lastChangedAt: null };
+      if (!acc.spiralAbyss) acc.spiralAbyss = { participated: false, currentFloor: 1, currentChamber: 1, completed: false };
+      if (!acc.imaginationTheatre) acc.imaginationTheatre = { participated: false };
+      if (!acc.stygianOnslaught) acc.stygianOnslaught = { participated: false };
       return acc;
     }
 
@@ -1183,6 +1378,7 @@
       const m = acc.liXingXiuYuan;
       if (m.finished) return showToast('此账号 砺行修远 已全部完成');
       if (!m.participated) return showToast('请先开启「参与」开关');
+      if (!m.weekParticipated) return showToast('本周暂停任务，请先开启「本周参与」');
       const today = todayKey();
       if (m.checkIns[today]) return showToast('今天已打卡啦');
 
@@ -1235,6 +1431,7 @@
       const m = acc.liXingXiuYuan;
       if (m.finished) return showToast('此账号 砺行修远 已全部完成');
       if (!m.participated) return showToast('请先开启「参与」开关');
+      if (!m.weekParticipated) return showToast('本周暂停任务，请先开启「本周参与」');
       if (m.checkIns[dateKey]) return showToast('该日期已打卡');
 
       // 不能补打未来
@@ -1295,8 +1492,9 @@
     // 计算全局汇总
     function computeSummary() {
       const total = state.accounts.length;
-      let lxyParticipated = 0, lxyFinished = 0, lxyTodayChecked = 0;
+      let lxyParticipated = 0, lxyFinished = 0, lxyTodayChecked = 0, lxyWeekPaused = 0;
       let dailyPaused = 0, dailyInProgress = 0, dailyCompleted = 0, dailyNotPart = 0;
+      let spiralPart = 0, theatrePart = 0, stygianPart = 0;
 
       state.accounts.forEach(acc => {
         const m = acc.liXingXiuYuan;
@@ -1305,6 +1503,7 @@
           lxyParticipated++;
           if (m.finished) lxyFinished++;
           if (isTodayChecked(acc)) lxyTodayChecked++;
+          if (!m.weekParticipated && !m.finished) lxyWeekPaused++;
         }
         if (!d.participated) {
           dailyNotPart++;
@@ -1315,10 +1514,14 @@
         } else if (d.progress === 'completed') {
           dailyCompleted++;
         }
+        if (acc.spiralAbyss?.participated) spiralPart++;
+        if (acc.imaginationTheatre?.participated) theatrePart++;
+        if (acc.stygianOnslaught?.participated) stygianPart++;
       });
 
-      return { total, lxyParticipated, lxyFinished, lxyTodayChecked,
-               dailyPaused, dailyInProgress, dailyCompleted, dailyNotPart };
+      return { total, lxyParticipated, lxyFinished, lxyTodayChecked, lxyWeekPaused,
+               dailyPaused, dailyInProgress, dailyCompleted, dailyNotPart,
+               spiralPart, theatrePart, stygianPart };
     }
 
     // 重置本周打卡
@@ -1350,6 +1553,8 @@
       if (!acc) return;
       acc.liXingXiuYuan = {
         participated: acc.liXingXiuYuan.participated,
+        weekParticipated: acc.liXingXiuYuan.weekParticipated,
+        focusTraining: acc.liXingXiuYuan.focusTraining,
         checkIns: {},
         weeks: {},
         tasksDone: 0,
@@ -1396,15 +1601,79 @@
       saveState();
     }
 
+    // 切换深境螺旋参与
+    function toggleSpiral(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      acc.spiralAbyss.participated = !acc.spiralAbyss.participated;
+      saveState();
+    }
+
+    // 更新深境螺旋进度
+    function updateSpiralProgress(id, floor, chamber, completed) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      if (completed != null) acc.spiralAbyss.completed = !!completed;
+      if (floor != null) acc.spiralAbyss.currentFloor = parseInt(floor) || 1;
+      if (chamber != null) acc.spiralAbyss.currentChamber = parseInt(chamber) || 1;
+      // 若标记已完成，进度归位到 12-3
+      if (acc.spiralAbyss.completed) {
+        acc.spiralAbyss.currentFloor = 12;
+        acc.spiralAbyss.currentChamber = 3;
+      }
+      saveState();
+    }
+
+    // 切换幻想真境剧诗参与
+    function toggleTheatre(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      acc.imaginationTheatre.participated = !acc.imaginationTheatre.participated;
+      saveState();
+    }
+
+    // 切换幽境危战参与
+    function toggleStygian(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      acc.stygianOnslaught.participated = !acc.stygianOnslaught.participated;
+      saveState();
+    }
+
+    // 切换本周参与（开启时弹确认）
+    function toggleWeekParticipate(id) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const m = acc.liXingXiuYuan;
+      if (!m.weekParticipated) {
+        // 关闭 → 直接关闭
+        m.weekParticipated = false;
+        saveState();
+      } else {
+        // 开启 → 二次确认
+        if (confirm('确定要开启本周砺行修远活动吗？开启后可继续打卡。')) {
+          m.weekParticipated = true;
+          saveState();
+        }
+      }
+    }
+
     /* ============================================================
      * 视图渲染
      * ============================================================ */
     const root = document.getElementById('root');
 
     function render() {
-      // 更新标签页高亮
-      document.getElementById('tabSummary')?.classList.toggle('active', state.tab === 'summary');
-      document.getElementById('tabAccounts')?.classList.toggle('active', state.tab === 'accounts');
+      // 更新侧边栏导航高亮
+      document.querySelectorAll('[data-nav]').forEach(el => {
+        el.classList.toggle('active', el.dataset.nav === state.tab);
+      });
+      // 移动端：切换 tab 时关闭抽屉
+      if (state.tab) state.mobileSidebarOpen = false;
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (sidebar) sidebar.classList.toggle('open', state.mobileSidebarOpen);
+      if (overlay) overlay.classList.toggle('show', state.mobileSidebarOpen);
 
       if (state.tab === 'summary') {
         renderSummaryPage();
@@ -1422,6 +1691,8 @@
         state.activeId = null;
       }
       render();
+      // 切换 tab 时回到顶部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // 从汇总页跳转到某账号详情
@@ -1531,6 +1802,17 @@
                 </div>
               </div>
             </div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)">
+              <div class="summary-section-title" style="margin-bottom:8px">
+                <span class="dot" style="background:var(--teal)"></span>挑战模块
+              </div>
+              <div class="daily-dist">
+                <span class="status-pill status-progress">深境螺旋 ${s.spiralPart}/${s.total}</span>
+                <span class="status-pill status-progress" style="background:rgba(122,92,192,0.12);color:#7a5cc0">幻想真境剧诗 ${s.theatrePart}/${s.total}</span>
+                <span class="status-pill status-progress" style="background:rgba(215,122,60,0.12);color:var(--orange)">幽境危战 ${s.stygianPart}/${s.total}</span>
+                ${s.lxyWeekPaused ? `<span class="status-pill status-skip">本周暂停 ${s.lxyWeekPaused}</span>` : ''}
+              </div>
+            </div>
           </div>
 
           <div class="card" style="padding:18px 22px;margin-top:18px;">
@@ -1546,6 +1828,7 @@
                     <th>今日打卡</th>
                     <th>剩余历练点</th>
                     <th>日常活动</th>
+                    <th>拓展模块</th>
                     <th>操作</th>
                   </tr>
                 </thead>
@@ -1599,6 +1882,18 @@
         dailyHtml = `<span class="status-pill ${cls}">${PROGRESS_LABELS[d.progress]}</span>`;
       }
 
+      // 拓展模块：深境螺旋 / 幻想真境剧诗 / 幽境危战
+      const spiralOn = acc.spiralAbyss?.participated;
+      const spiralDone = acc.spiralAbyss?.completed;
+      const theatreOn = acc.imaginationTheatre?.participated;
+      const stygianOn = acc.stygianOnslaught?.participated;
+      const extParts = [
+        spiralOn ? `<span title="深境螺旋 ${acc.spiralAbyss.currentFloor}-${acc.spiralAbyss.currentChamber}${spiralDone ? ' ✓' : ''}" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;background:${spiralDone ? 'rgba(46,154,108,0.12)' : 'rgba(78,166,163,0.12)'};color:${spiralDone ? 'var(--green)' : 'var(--teal)'}">深 ${acc.spiralAbyss.currentFloor}-${acc.spiralAbyss.currentChamber}${spiralDone ? ' ✓' : ''}</span>` : '',
+        theatreOn ? `<span title="幻想真境剧诗" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(122,92,192,0.12);color:#7a5cc0">幻</span>` : '',
+        stygianOn ? `<span title="幽境危战" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(215,122,60,0.12);color:var(--orange)">幽</span>` : ''
+      ].filter(Boolean);
+      const extHtml = extParts.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${extParts.join('')}</div>` : '<span style="color:var(--text-faint)">—</span>';
+
       const [c1, c2] = accountAvatarColor(acc.name);
 
       return `
@@ -1635,6 +1930,7 @@
           </td>
           <td>${pointsHtml}</td>
           <td>${dailyHtml}</td>
+          <td>${extHtml}</td>
           <td>
             ${needsAttention ? `<button class="jump-btn" data-jump-id="${acc.id}">跟进 →</button>` : '<span style="color:var(--text-faint);font-size:12px">已完成</span>'}
           </td>
@@ -1790,6 +2086,7 @@
     function enterDetail(id) {
       state.view = 'detail';
       state.activeId = id;
+      state.detailTab = 'lixy';
       render();
     }
     function backToList() {
@@ -1812,192 +2109,175 @@
       // 周日历(显示 7 天，我们只显示 周一到周日 5 个打卡格子太高，这里用 5 个表示进度)
       // 实际上"一周打卡 5 次"不一定要连号，所以直接展示成 5 个槽位。
       const weekDays = getWeekDays();
-      // 标记今天是哪一天
-      const todayIdx = weekDays.findIndex(dd => todayKey(dd) === today);
 
-      // 砍 5 格的实现：显示本周中已打卡的日
-      const weekFilled = weekDays.map(dd => todayKey(dd))
-                                 .filter(k => !!m.checkIns[k]);
+      // 详情页 tab 切换
+      const isLixy = state.detailTab !== 'daily';
 
       root.innerHTML = `
         <div class="detail-head">
           <button class="back-btn" id="btnBack">←</button>
           <div style="flex:1;min-width:0">
-            <h2>${escapeHtml(acc.name)}</h2>
+            <h2>${escapeHtml(acc.name)}${m.focusTraining ? ' <span style="color:var(--gold)">⭐</span>' : ''}</h2>
             <div class="detail-sub">${acc.uid ? `UID ${escapeHtml(acc.uid)} · ` : ''}${escapeHtml(acc.server)}${acc.note ? ` · ${escapeHtml(acc.note)}` : ''}</div>
           </div>
           <button class="btn btn-sm" id="btnEditInline">编辑</button>
         </div>
 
-        <div class="detail-grid">
-          <!-- 砺行修远 -->
-          <section class="card module-card">
-            <div class="module-head">
-              <div class="module-title-wrap">
-                <div class="module-icon lixy">📜</div>
-                <div>
-                  <div class="module-title">砺行修远</div>
-                  <div class="module-sub">每周打卡 ${CHECKINS_PER_TASK} 次 → 完成 1 个任务 · 共 ${TASK_TOTAL_REQUIRED} 次 · 每日5点重置</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="switch-row">
-              <div>
-                <div class="switch-label">是否参与</div>
-                <div class="switch-help">关闭后将不再累计与提醒</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" data-toggle="lxy" ${m.participated ? 'checked' : ''}>
-                <span class="switch-slider"></span>
-              </label>
-            </div>
-
-            <div class="switch-row">
-              <div>
-                <div class="switch-label">⭐ 本周期着重练</div>
-                <div class="switch-help">标注此账号在本砺行修远周期需侧重练号</div>
-              </div>
-              <label class="switch">
-                <input type="checkbox" data-toggle="focus" ${m.focusTraining ? 'checked' : ''}>
-                <span class="switch-slider"></span>
-              </label>
-            </div>
-
-            <div class="big-stat">
-              <div class="stat-box">
-                <div class="stat-num">${tasksDone}</div>
-                <div class="stat-label">任务进度（/${TASK_TOTAL_REQUIRED}）</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-num">${weekCount}</div>
-                <div class="stat-label">本周打卡（/${CHECKINS_PER_TASK}）</div>
-              </div>
-            </div>
-
-            <div class="help-note">
-              ${m.finished
-                ? '本账号砺行修远已全部完成。可在历史留档；若出新活动可点下方「重置进度」重新开始。'
-                : !m.participated
-                  ? '请先开启「参与」开关，再开始每日打卡。'
-                  : weekCount >= CHECKINS_PER_TASK
-                    ? '✅ 本周任务已完成！打卡区域已关闭，下周一凌晨5点后自动开启新一周打卡。'
-                    : isTodayDone
-                      ? '今天已打卡。如漏了之前某天，可在下方日历点击对应日期补打卡。'
-                      : '点击「打卡」记录今天任务，或点击下方日历中过去未打卡的日期补打。'
-              }
-              <br><span style="font-size:11px;color:var(--text-faint)">打卡周期：每日凌晨5点重置（5:00~次日4:59为一天）</span>
-            </div>
-
-            <div class="points-field">
-              <span class="points-field-label">剩余历练点</span>
-              <input type="number" class="points-input ${(() => { const ps = getPointsStyle(m.remainingPoints); return ps ? ps.cls : ''; })()}" id="inpRemainingPoints"
-                value="${m.remainingPoints != null ? m.remainingPoints : ''}"
-                step="0.1" min="0" placeholder="0.0"
-                onwheel="this.blur()" />
-              <span class="points-field-help">手动输入，精确至小数点后 1 位</span>
-              ${(() => { const ps = getPointsStyle(m.remainingPoints); return ps && ps.prompt ? `<span class="points-prompt ${ps.promptCls}">${ps.prompt}</span>` : ''; })()}
-            </div>
-
-            <div class="week-calendar">
-              <div class="week-cal-label">本周打卡日历${m.participated && !m.finished && weekCount < CHECKINS_PER_TASK ? ' · 点击过去未打卡日期可补打' : ''}</div>
-              <div class="week-cal-grid">
-                ${weekDays.map((dd, i) => {
-                  const dk = todayKey(dd);
-                  const isChecked = !!m.checkIns[dk];
-                  const isToday = dk === today;
-                  const isPast = dk < today;
-                  const isFuture = dk > today;
-                  const canCheckIn = m.participated && !m.finished && !isChecked && isPast && weekCount < CHECKINS_PER_TASK;
-                  const dayNames = ['一','二','三','四','五','六','日'];
-                  return `<button class="cal-cell ${isChecked ? 'done' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''} ${canCheckIn ? 'clickable' : ''}"
-                    ${canCheckIn ? `data-checkin-date="${dk}"` : ''}>
-                    <span class="cal-day-name">周${dayNames[i]}</span>
-                    <span class="cal-day-num">${dd.getDate()}</span>
-                    <span class="cal-status">${isChecked ? '✓' : isToday ? (m.participated && !m.finished ? '今' : '') : canCheckIn ? '+' : ''}</span>
-                  </button>`;
-                }).join('')}
-              </div>
-            </div>
-
-            <div class="action-bar">
-              <button class="btn btn-primary" id="btnCheckin" ${(!m.participated || m.finished || isTodayDone || weekCount >= CHECKINS_PER_TASK) ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
-                ✓ 今日打卡
-              </button>
-              ${isTodayDone ? `<button class="btn btn-ghost" id="btnUndo">撤销打卡</button>` : ''}
-            </div>
-            <div class="action-bar" style="margin-top:8px">
-              <button class="btn btn-sm btn-ghost" id="btnResetWeek">↺ 重置本周打卡</button>
-              <button class="btn btn-sm btn-danger" id="btnResetLixy">⚠ 重置全部进度</button>
-            </div>
-          </section>
-
-          <!-- 日常活动 -->
-          <section class="card module-card">
-            <div class="module-head">
-              <div class="module-title-wrap">
-                <div class="module-icon daily">🌿</div>
-                <div>
-                  <div class="module-title">日常活动</div>
-                  <div class="module-sub">暂停 → 进行中 → 已完成</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="switch-row">
-              <div>
-                <div class="switch-label">是否参与</div>
-                <div class="switch-help">关闭后状态保持但不再提醒</div>
-              </div>
-              <label class="switch switch-blue">
-                <input type="checkbox" data-toggle="daily" ${d.participated ? 'checked' : ''}>
-                <span class="switch-slider"></span>
-              </label>
-            </div>
-
-            <div class="help-note">
-              ${!d.participated
-                ? '开启参与后，选择当前进度。'
-                : d.progress === 'completed'
-                  ? '今天的日常活动已完成，可在切换新的一天时点击「重置」回到「暂停」。'
-                  : d.progress === 'in_progress'
-                    ? '当前正在进行中。完成全部任务后，点击右下角推进至「已完成」。'
-                    : '当前暂停。开始任务时，点击「推进」进入「进行中」。'}
-            </div>
-
-            <div class="state-machine">
-              ${PROGRESS_STATES.map(s => `
-                <button class="sm-state ${d.progress === s ? 'current ' + s : ''}"
-                  data-set-progress="${s}" ${!d.participated ? 'disabled style="opacity:.5"' : ''}>
-                  ${PROGRESS_LABELS[s]}
-                </button>
-              `).join('')}
-            </div>
-
-            <div class="action-bar">
-              <button class="btn btn-blue" id="btnAdvanceProgress" ${!d.participated || d.progress === 'completed' ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
-                ⏩ 推进到下一阶段
-              </button>
-              <button class="btn btn-ghost" id="btnResetProgress" ${!d.participated ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
-                ↺ 重置为暂停
-              </button>
-            </div>
-          </section>
+        <div class="detail-tabs">
+          <button class="detail-tab ${isLixy ? 'active gold' : ''}" data-detail-tab="lixy">
+            📜 砺行修远
+          </button>
+          <button class="detail-tab ${!isLixy ? 'active blue' : ''}" data-detail-tab="daily">
+            🌿 日常活动
+          </button>
         </div>
+
+        ${isLixy ? renderDetailLixy(acc, m, weekCount, isTodayDone, today, tasksDone, weekDays)
+                 : renderDetailDaily(acc, d)}
       `;
 
       document.getElementById('btnBack').addEventListener('click', backToList);
       document.getElementById('btnEditInline').addEventListener('click', () => openEditAccountModal(acc.id));
 
-      // toggle
+      // tab 切换
+      root.querySelectorAll('[data-detail-tab]').forEach(b => {
+        b.addEventListener('click', () => { state.detailTab = b.dataset.detailTab; render(); });
+      });
+
+      if (isLixy) {
+        bindDetailLixyEvents(acc, m, weekCount);
+      } else {
+        bindDetailDailyEvents(acc, d, acc.spiralAbyss, acc.imaginationTheatre, acc.stygianOnslaught);
+      }
+    }
+
+    // ===== 详情页 - 砺行修远 Tab =====
+    function renderDetailLixy(acc, m, weekCount, isTodayDone, today, tasksDone, weekDays) {
+      const ps = getPointsStyle(m.remainingPoints);
+      const weekPaused = m.participated && !m.weekParticipated && !m.finished;
+
+      return `
+        <section class="card module-card">
+          <div class="module-head">
+            <div class="module-title-wrap">
+              <div class="module-icon lixy">📜</div>
+              <div>
+                <div class="module-title">砺行修远</div>
+                <div class="module-sub">每周打卡 ${CHECKINS_PER_TASK} 次 → 完成 1 个任务 · 共 ${TASK_TOTAL_REQUIRED} 次 · 每日5点重置</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 顶部 3 个开关 -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:8px 12px;background:var(--card-strong);border:1px solid var(--border);border-radius:12px;margin-bottom:16px">
+            <div class="switch-row" style="padding:0;flex-direction:column;align-items:flex-start;gap:8px">
+              <div class="switch-label" style="font-weight:600">本期是否参与</div>
+              <label class="switch">
+                <input type="checkbox" data-toggle="lxy" ${m.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row" style="padding:0;flex-direction:column;align-items:flex-start;gap:8px;border-left:1px solid var(--border);padding-left:14px">
+              <div class="switch-label" style="font-weight:600">本周是否参与</div>
+              <label class="switch switch-blue">
+                <input type="checkbox" data-toggle="lxyWeek" ${m.weekParticipated ? 'checked' : ''} ${!m.participated ? 'disabled' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="switch-row" style="padding:0;flex-direction:column;align-items:flex-start;gap:8px;border-left:1px solid var(--border);padding-left:14px">
+              <div class="switch-label" style="font-weight:600">⭐ 本周期重点</div>
+              <label class="switch switch-orange">
+                <input type="checkbox" data-toggle="focus" ${m.focusTraining ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="big-stat">
+            <div class="stat-box">
+              <div class="stat-num">${tasksDone}</div>
+              <div class="stat-label">任务进度（/${TASK_TOTAL_REQUIRED}）</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-num">${weekCount}</div>
+              <div class="stat-label">本周打卡（/${CHECKINS_PER_TASK}）</div>
+            </div>
+          </div>
+
+          <div class="help-note">
+            ${m.finished
+              ? '本账号砺行修远已全部完成。可在历史留档；若出新活动可点下方「重置进度」重新开始。'
+              : !m.participated
+                ? '请先开启「本期是否参与」开关，再开始每日打卡。'
+                : weekPaused
+                  ? '⏸ 本周暂停任务。开启「本周是否参与」后可继续打卡，已有打卡数据保留。'
+                  : weekCount >= CHECKINS_PER_TASK
+                    ? '✅ 本周任务已完成！打卡区域已关闭，下周一凌晨5点后自动开启新一周打卡。'
+                    : isTodayDone
+                      ? '今天已打卡。如漏了之前某天，可在下方日历点击对应日期补打卡。'
+                      : '点击「打卡」记录今天任务，或点击下方日历中过去未打卡的日期补打。'
+            }
+            <br><span style="font-size:11px;color:var(--text-faint)">打卡周期：每日凌晨5点重置（5:00~次日4:59为一天）</span>
+          </div>
+
+          <div class="points-field">
+            <span class="points-field-label">剩余历练点</span>
+            <input type="number" class="points-input ${ps ? ps.cls : ''}" id="inpRemainingPoints"
+              value="${m.remainingPoints != null ? m.remainingPoints : ''}"
+              step="0.1" min="0" placeholder="0.0"
+              onwheel="this.blur()" />
+            <span class="points-field-help">手动输入，精确至小数点后 1 位</span>
+            ${ps && ps.prompt ? `<span class="points-prompt ${ps.promptCls}">${ps.prompt}</span>` : ''}
+          </div>
+
+          <div class="week-calendar">
+            <div class="week-cal-label">本周打卡日历${m.participated && !m.finished && m.weekParticipated && weekCount < CHECKINS_PER_TASK ? ' · 点击过去未打卡日期可补打' : (weekPaused ? ' · 本周暂停' : '')}</div>
+            <div class="week-cal-grid">
+              ${weekDays.map((dd, i) => {
+                const dk = todayKey(dd);
+                const isChecked = !!m.checkIns[dk];
+                const isToday = dk === today;
+                const isPast = dk < today;
+                const isFuture = dk > today;
+                const canCheckIn = m.participated && !m.finished && m.weekParticipated && !isChecked && isPast && weekCount < CHECKINS_PER_TASK;
+                const dayNames = ['一','二','三','四','五','六','日'];
+                const dimmed = weekPaused;
+                return `<button class="cal-cell ${isChecked ? 'done' : ''} ${isToday ? 'today' : ''} ${isFuture ? 'future' : ''} ${canCheckIn ? 'clickable' : ''} ${dimmed ? 'dimmed' : ''}"
+                  ${canCheckIn ? `data-checkin-date="${dk}"` : ''}>
+                  <span class="cal-day-name">周${dayNames[i]}</span>
+                  <span class="cal-day-num">${dd.getDate()}</span>
+                  <span class="cal-status">${isChecked ? '✓' : isToday ? (m.participated && !m.finished && m.weekParticipated ? '今' : '') : canCheckIn ? '+' : ''}</span>
+                </button>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <div class="action-bar">
+            <button class="btn btn-primary" id="btnCheckin" ${(!m.participated || !m.weekParticipated || m.finished || isTodayDone || weekCount >= CHECKINS_PER_TASK) ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+              ${weekPaused ? '⏸ 本周暂停任务' : '✓ 今日打卡'}
+            </button>
+            ${isTodayDone ? `<button class="btn btn-ghost" id="btnUndo">撤销打卡</button>` : ''}
+          </div>
+          <div class="action-bar" style="margin-top:8px">
+            <button class="btn btn-sm btn-ghost" id="btnResetWeek">↺ 重置本周打卡</button>
+            <button class="btn btn-sm btn-danger" id="btnResetLixy">⚠ 重置全部进度</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function bindDetailLixyEvents(acc, m, weekCount) {
+      // 3 个开关
       root.querySelectorAll('[data-toggle]').forEach(input => {
         input.addEventListener('change', () => {
           const k = input.dataset.toggle;
           if (k === 'focus') {
-            const acc2 = findAccount(acc.id);
-            if (acc2) { acc2.liXingXiuYuan.focusTraining = !acc2.liXingXiuYuan.focusTraining; saveState(); }
-          } else {
-            toggleParticipate(acc.id, k === 'lxy' ? 'liXingXiuYuan' : 'dailyActivities');
+            acc.liXingXiuYuan.focusTraining = !acc.liXingXiuYuan.focusTraining;
+            saveState();
+          } else if (k === 'lxy') {
+            toggleParticipate(acc.id, 'liXingXiuYuan');
+          } else if (k === 'lxyWeek') {
+            toggleWeekParticipate(acc.id);
           }
           render();
         });
@@ -2016,7 +2296,175 @@
           showToast('进度已重置');
         }
       });
-      // progress
+      // 补打卡
+      root.querySelectorAll('[data-checkin-date]').forEach(cell => {
+        cell.addEventListener('click', () => {
+          checkInOnDate(acc.id, cell.dataset.checkinDate);
+          render();
+        });
+      });
+      // 历练点
+      const pointsInput = document.getElementById('inpRemainingPoints');
+      pointsInput?.addEventListener('change', () => {
+        updateRemainingPoints(acc.id, pointsInput.value);
+        showToast('历练点已更新');
+        render();
+      });
+    }
+
+    // ===== 详情页 - 日常活动 Tab =====
+    function renderDetailDaily(acc, d, spiral, theatre, stygian) {
+      return `
+        <section class="card module-card">
+          <div class="module-head">
+            <div class="module-title-wrap">
+              <div class="module-icon daily">🌿</div>
+              <div>
+                <div class="module-title">日常活动</div>
+                <div class="module-sub">暂停 → 进行中 → 已完成 · 共 4 个子模块</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 子区块 1：日常活动 -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-title">
+                <span class="dot" style="background:var(--blue)"></span>
+                <span>是否参与日常活动</span>
+              </div>
+              <label class="switch switch-blue">
+                <input type="checkbox" data-toggle="daily" ${d.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            ${d.participated ? `
+              <div class="sub-section-body">
+                <div class="help-note">
+                  ${d.progress === 'completed'
+                    ? '今天的日常活动已完成，可在切换新的一天时点击「重置」回到「暂停」。'
+                    : d.progress === 'in_progress'
+                      ? '当前正在进行中。完成全部任务后，点击右下角推进至「已完成」。'
+                      : '当前暂停。开始任务时，点击「推进」进入「进行中」。'}
+                </div>
+                <div class="state-machine">
+                  ${PROGRESS_STATES.map(s => `
+                    <button class="sm-state ${d.progress === s ? 'current ' + s : ''}" data-set-progress="${s}">
+                      ${PROGRESS_LABELS[s]}
+                    </button>
+                  `).join('')}
+                </div>
+                <div class="action-bar">
+                  <button class="btn btn-blue" id="btnAdvanceProgress" ${d.progress === 'completed' ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+                    ⏩ 推进到下一阶段
+                  </button>
+                  <button class="btn btn-ghost" id="btnResetProgress">↺ 重置为暂停</button>
+                </div>
+              </div>
+            ` : `
+              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后可选择当前进度（暂停/进行中/已完成）。</div>
+            `}
+          </div>
+
+          <!-- 子区块 2：深境螺旋 -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-title">
+                <span class="dot" style="background:var(--teal)"></span>
+                <span>是否参与深境螺旋</span>
+              </div>
+              <label class="switch switch-blue-2">
+                <input type="checkbox" data-toggle="spiral" ${spiral.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            ${spiral.participated ? `
+              <div class="sub-section-body">
+                <div class="help-note">
+                  选择当前挑战进度，每月 1 号和 15 号深境螺旋会重置；通关后可勾选「本期已完成」。
+                </div>
+                <div class="select-pair">
+                  <div>
+                    <label>层数</label>
+                    <select class="field-select" data-spiral-floor>
+                      ${Array.from({length:12},(_,i)=>i+1).map(f => `<option value="${f}" ${spiral.currentFloor==f?'selected':''}>第${f}层</option>`).join('')}
+                    </select>
+                  </div>
+                  <div>
+                    <label>间数</label>
+                    <select class="field-select" data-spiral-chamber>
+                      ${[1,2,3].map(c => `<option value="${c}" ${spiral.currentChamber==c?'selected':''}>第${c}间</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+                <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+                  <input type="checkbox" id="chkSpiralDone" ${spiral.completed ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer" />
+                  <label for="chkSpiralDone" style="font-size:13px;color:var(--text);cursor:pointer">本期已完成通关</label>
+                </div>
+              </div>
+            ` : `
+              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后可记录当前挑战进度。</div>
+            `}
+          </div>
+
+          <!-- 子区块 3：幻想真境剧诗 -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-title">
+                <span class="dot" style="background:#7a5cc0"></span>
+                <span>是否参与幻想真境剧诗</span>
+              </div>
+              <label class="switch switch-purple">
+                <input type="checkbox" data-toggle="theatre" ${theatre.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            ${theatre.participated ? `
+              <div class="sub-section-body">
+                <div class="help-note">已开启参与。幻想真境剧诗每周重置一次。</div>
+              </div>
+            ` : `
+              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后此账号将纳入该模块汇总统计。</div>
+            `}
+          </div>
+
+          <!-- 子区块 4：幽境危战 -->
+          <div class="sub-section">
+            <div class="sub-section-head">
+              <div class="sub-section-title">
+                <span class="dot" style="background:var(--orange)"></span>
+                <span>是否参与幽境危战</span>
+              </div>
+              <label class="switch switch-orange">
+                <input type="checkbox" data-toggle="stygian" ${stygian.participated ? 'checked' : ''}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            ${stygian.participated ? `
+              <div class="sub-section-body">
+                <div class="help-note">已开启参与。幽境危战每月重置一次。</div>
+              </div>
+            ` : `
+              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后此账号将纳入该模块汇总统计。</div>
+            `}
+          </div>
+        </section>
+      `;
+    }
+
+    function bindDetailDailyEvents(acc, d, spiral, theatre, stygian) {
+      // 4 个开关
+      root.querySelectorAll('[data-toggle]').forEach(input => {
+        input.addEventListener('change', () => {
+          const k = input.dataset.toggle;
+          if (k === 'daily') toggleParticipate(acc.id, 'dailyActivities');
+          else if (k === 'spiral') toggleSpiral(acc.id);
+          else if (k === 'theatre') toggleTheatre(acc.id);
+          else if (k === 'stygian') toggleStygian(acc.id);
+          render();
+        });
+      });
+      // 日常活动进度切换
       root.querySelectorAll('[data-set-progress]').forEach(b => {
         b.addEventListener('click', () => { setDailyProgress(acc.id, b.dataset.setProgress); render(); });
       });
@@ -2024,20 +2472,13 @@
       document.getElementById('btnResetProgress')?.addEventListener('click', () => {
         if (confirm('将日常活动进度重置为「暂停」？')) { resetDailyProgress(acc.id); render(); }
       });
-      // 补打卡日历点击
-      root.querySelectorAll('[data-checkin-date]').forEach(cell => {
-        cell.addEventListener('click', () => {
-          checkInOnDate(acc.id, cell.dataset.checkinDate);
-          render();
-        });
-      });
-      // 剩余历练点输入
-      const pointsInput = document.getElementById('inpRemainingPoints');
-      pointsInput?.addEventListener('change', () => {
-        updateRemainingPoints(acc.id, pointsInput.value);
-        showToast('历练点已更新');
-        render();
-      });
+      // 深境螺旋
+      const floorSel = root.querySelector('[data-spiral-floor]');
+      const chamberSel = root.querySelector('[data-spiral-chamber]');
+      const doneChk = document.getElementById('chkSpiralDone');
+      floorSel?.addEventListener('change', () => { updateSpiralProgress(acc.id, floorSel.value, null, null); render(); });
+      chamberSel?.addEventListener('change', () => { updateSpiralProgress(acc.id, null, chamberSel.value, null); render(); });
+      doneChk?.addEventListener('change', () => { updateSpiralProgress(acc.id, null, null, doneChk.checked); render(); });
     }
 
     /* ============================================================
@@ -2156,12 +2597,16 @@
                 <li>累计完成 8 次任务后即收官，会显示「🎉 收官」徽章。</li>
                 <li>每天只能打卡 1 次，重复点击会提示已打卡。</li>
                 <li>跨自然周（周一）后，本周打卡数会自动清零。</li>
+                <li><strong>本期是否参与</strong>：整个活动周期的参与开关，关闭后不再累计。</li>
+                <li><strong>本周是否参与</strong>：每周可独立控制，关闭时本周打卡按钮禁用、日历显示「本周暂停任务」；开启时需二次确认，已有打卡数据保留。</li>
+                <li><strong>本周期重点</strong>（⭐）：标注此账号为本砺行修远周期的侧重练号，汇总页显示星标。</li>
               </ul>
               <h3>🌿 日常活动模块</h3>
               <ul>
-                <li>简单的状态机：<strong>暂停 → 进行中 → 已完成</strong>。</li>
-                <li>点击对应阶段卡片可直接跳转，或用「推进到下一阶段」按钮。</li>
-                <li>新一天开始时，手动重置到「暂停」。</li>
+                <li>包含 4 个子模块，每个可独立开关：日常活动、深境螺旋、幻想真境剧诗、幽境危战。</li>
+                <li><strong>日常活动</strong>：状态机 <strong>暂停 → 进行中 → 已完成</strong>。点击对应阶段卡片可直接切换，或用「推进到下一阶段」按钮。</li>
+                <li><strong>深境螺旋</strong>：选择当前挑战进度（第 N 层 / 第 M 间），并可标记「本期已完成通关」。</li>
+                <li><strong>幻想真境剧诗</strong> / <strong>幽境危战</strong>：仅参与开关，无进度跟踪。</li>
               </ul>
               <h3>🛠 数据 & 云同步</h3>
               <ul>
@@ -2192,6 +2637,18 @@
               <button class="modal-close" data-act="close">✕</button>
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>布局重构</strong>：顶部「汇总/账号」改为左侧侧边栏（桌面端固定，移动端汉堡按钮 + 抽屉式菜单）</li>
+                  <li><strong>详情页 Tab 化</strong>：砺行修远与日常活动改为顶部 Tab 切换，单列布局更清爽</li>
+                  <li><strong>砺行修远 3 开关</strong>：本期是否参与 / 本周是否参与（开启时二次确认）/ 本周期重点（原着重练）</li>
+                  <li>本周参与关闭时：打卡按钮显示「本周暂停任务」不可点，日历灰度显示，已有打卡数据保留</li>
+                  <li><strong>日常活动新增 3 子模块</strong>：深境螺旋（开关 + 层/间下拉 + 通关标记）、幻想真境剧诗（开关）、幽境危战（开关）</li>
+                  <li>汇总页新增「拓展模块」统计行和账号明细列，深境螺旋进度以「N-M」形式展示</li>
+                  <li>CSV 模板同步扩展新字段，向后兼容（旧格式仍可导入）</li>
+                </ul>
+              </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.8.0 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-20</span></div>
                 <ul style="margin-top:6px">
@@ -2461,16 +2918,19 @@
 
     // CSV 模板下载
     function downloadCsvTemplate() {
-      const header = '账号名称,UID,服务器,是否参与砺行修远,砺行修远已完成任务数,剩余历练点,是否参与日常活动,日常活动进度\n';
-      const row1  = '主号,100123456,国服,是,3,50.0,是,进行中\n';
-      const row2  = '小号A,100234567,B服,否,0,,是,暂停\n';
-      const row3  = '小号B,100345678,国服,是,8,,否,已完成\n';
+      const header = '账号名称,UID,服务器,是否参与砺行修远,本周是否参与,砺行修远已完成任务数,剩余历练点,是否参与日常活动,日常活动进度,是否参与深境螺旋,深境螺旋当前层,深境螺旋当前间,深境螺旋是否通关,是否参与幻想真境剧诗,是否参与幽境危战\n';
+      const row1  = '主号,100123456,国服,是,是,3,50.0,是,进行中,是,8,2,否,是,是\n';
+      const row2  = '小号A,100234567,B服,否,否,0,,是,暂停,否,1,1,否,否,否\n';
+      const row3  = '小号B,100345678,国服,是,是,8,,否,已完成,是,12,3,是,否,是\n';
       const note  = '\n'
         + '# 字段说明：\n'
-        + '# 是否参与砺行修远/日常活动：填 是 或 否\n'
+        + '# 是否参与(各模块)：填 是 或 否\n'
+        + '# 本周是否参与：填 是 或 否（需先开启「本期是否参与」）\n'
         + '# 砺行修远已完成任务数：0-8 的整数\n'
         + '# 剩余历练点：小数，精确到1位（如 50.0），不填则留空\n'
-        + '# 日常活动进度：暂停 / 进行中 / 已完成\n';
+        + '# 日常活动进度：暂停 / 进行中 / 已完成\n'
+        + '# 深境螺旋当前层/间：1-12 / 1-3\n'
+        + '# 深境螺旋是否通关：是 / 否（选「是」时进度自动归位到 12-3）\n';
       const csv = header + row1 + row2 + row3 + note;
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
       const url = URL.createObjectURL(blob);
@@ -2506,9 +2966,12 @@
             rows.forEach(line => {
               const cols = parseCsvLine(line);
               if (!cols[0]) return;
-              const tasksDone = Math.min(8, Math.max(0, parseInt(cols[4]) || 0));
+              const tasksDone = Math.min(8, Math.max(0, parseInt(cols[5]) || 0));
               const finished = tasksDone >= 8;
-              const pts = cols[5] ? parseFloat(cols[5]) : NaN;
+              const pts = cols[6] ? parseFloat(cols[6]) : NaN;
+              const spiralFloor = Math.min(12, Math.max(1, parseInt(cols[10]) || 1));
+              const spiralChamber = Math.min(3, Math.max(1, parseInt(cols[11]) || 1));
+              const spiralCompleted = parseCsvBool(cols[12]);
               const acc = {
                 id: uid(),
                 name: cols[0] || '未命名账号',
@@ -2518,6 +2981,8 @@
                 createdAt: new Date().toISOString(),
                 liXingXiuYuan: {
                   participated: parseCsvBool(cols[3]),
+                  weekParticipated: parseCsvBool(cols[4]),
+                  focusTraining: false,
                   checkIns: {},
                   weeks: {},
                   tasksDone: tasksDone,
@@ -2526,9 +2991,21 @@
                   remainingPoints: !isNaN(pts) ? Math.round(pts * 10) / 10 : null
                 },
                 dailyActivities: {
-                  participated: parseCsvBool(cols[6]),
-                  progress: parseCsvProgress(cols[7]),
+                  participated: parseCsvBool(cols[7]),
+                  progress: parseCsvProgress(cols[8]),
                   lastChangedAt: null
+                },
+                spiralAbyss: {
+                  participated: parseCsvBool(cols[9]),
+                  currentFloor: spiralCompleted ? 12 : spiralFloor,
+                  currentChamber: spiralCompleted ? 3 : spiralChamber,
+                  completed: spiralCompleted
+                },
+                imaginationTheatre: {
+                  participated: parseCsvBool(cols[13])
+                },
+                stygianOnslaught: {
+                  participated: parseCsvBool(cols[14])
                 }
               };
               state.accounts.push(acc);
@@ -2736,9 +3213,19 @@
       document.getElementById('btnChangelog').addEventListener('click', () => {
         state.modal = 'changelog'; render();
       });
-      // 标签页切换
-      document.getElementById('tabSummary').addEventListener('click', () => switchTab('summary'));
-      document.getElementById('tabAccounts').addEventListener('click', () => switchTab('accounts'));
+      // 侧边栏导航
+      document.querySelectorAll('[data-nav]').forEach(el => {
+        el.addEventListener('click', () => switchTab(el.dataset.nav));
+      });
+      // 移动端汉堡菜单
+      document.getElementById('btnHamburger').addEventListener('click', () => {
+        state.mobileSidebarOpen = !state.mobileSidebarOpen;
+        render();
+      });
+      document.getElementById('sidebarOverlay').addEventListener('click', () => {
+        state.mobileSidebarOpen = false;
+        render();
+      });
     }
     init();
 
