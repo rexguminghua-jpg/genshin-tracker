@@ -1212,7 +1212,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.8</span>
+        <span class="version-badge" id="versionBadge">v1.9.9</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2229,12 +2229,6 @@
       const today = todayKey();
       const tasksDone = m.tasksDone || 0;
 
-      // 进度配色：0 灰色 / 进行中 红→绿 HSL 渐变 / 100% 金绿色
-      const taskRatio  = Math.max(0, Math.min(1, tasksDone / TASK_TOTAL_REQUIRED));
-      const weekRatio  = Math.max(0, Math.min(1, weekCount / CHECKINS_PER_TASK));
-      const taskColor  = progressHue(taskRatio);
-      const weekColor  = progressHue(weekRatio);
-
       // 周日历(显示 7 天，我们只显示 周一到周日 5 个打卡格子太高，这里用 5 个表示进度)
       // 实际上"一周打卡 5 次"不一定要连号，所以直接展示成 5 个槽位。
       const weekDays = getWeekDays();
@@ -2280,6 +2274,12 @@
       const now = adjustedNow();
       const ps = getPointsStyle(m.remainingPoints);
       const weekPaused = m.participated && !m.weekParticipated && !m.finished;
+
+      // 进度配色：0 灰色 / 进行中 红→绿 HSL 渐变 / 100% 金绿色
+      const taskRatio = Math.max(0, Math.min(1, (tasksDone || 0) / TASK_TOTAL_REQUIRED));
+      const weekRatio = Math.max(0, Math.min(1, (weekCount || 0) / CHECKINS_PER_TASK));
+      const taskColor = progressHue(taskRatio);
+      const weekColor = progressHue(weekRatio);
 
       return `
         <section class="card module-card">
@@ -2403,7 +2403,7 @@
         const dateObj = new Date(calYear, calMonth, d);
         const dk = todayKey(dateObj);
         const isToday = dk === today;
-        const isChecked = !!m.checkIns[dk];
+        const isChecked = !!(m.checkIns && m.checkIns[dk]);
         const isFuture = dk > today;
         const inCurWeek = getWeekStart(dateObj).getTime() === curWeekStartTs;
         const canCheckIn = m.participated && !m.finished && m.weekParticipated && !isChecked && !isFuture && inCurWeek && weekCount < CHECKINS_PER_TASK;
@@ -2796,6 +2796,12 @@
               <button class="modal-close" data-act="close">✕</button>
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.9 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>修复</strong>：修复 v1.9.8 引入的回归——点击账号卡片或从汇总页「跟进」进入详情页时页面无反应（进度数字配色变量 `taskColor` / `weekColor` 未传入详情渲染函数，导致模板拼接抛错中断渲染）。已将配色计算内聚到详情渲染函数内部，并对缺字段旧数据增加防御，避免任何情况下详情页崩溃</li>
+                </ul>
+              </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.8 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
                 <ul style="margin-top:6px">
