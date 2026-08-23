@@ -688,7 +688,7 @@
       align-items: flex-start;
       margin-top: 6px;
     }
-    .month-cal { flex: 2 1 0; min-width: 0; }
+    .month-cal { flex: 1 1 0; min-width: 0; }
     .month-cal-head {
       display: flex; align-items: baseline; justify-content: space-between;
       margin-bottom: 8px;
@@ -739,10 +739,12 @@
 
     /* 右侧操作按钮列 */
     .lixy-actions {
-      flex: 1 1 0;
+      flex: 2 1 0;
       min-width: 0;
       display: flex; flex-direction: column; gap: 8px;
+      align-items: flex-start;
     }
+    .lixy-act { max-width: 260px; }
     .lixy-act { width: 100%; white-space: nowrap; }
 
     @media (max-width: 600px) {
@@ -1109,7 +1111,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.5</span>
+        <span class="version-badge" id="versionBadge">v1.9.6</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2686,7 +2688,7 @@
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.5 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.6 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-23</span></div>
                 <ul style="margin-top:6px">
                   <li><strong>布局改造</strong>：砺行修远打卡区改为左右布局——左侧显示<b>当月日历</b>，含「今天」所在当周高亮、其余周灰显、已打卡日期下方金色圆点标记；右侧按钮竖排（今日打卡 / 撤销打卡 / 重置本周 / 重置全部）</li>
                   <li>当月日历中，当前周「过去未打卡」的日期仍可点击补打，其余周只读灰显</li>
