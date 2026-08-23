@@ -624,6 +624,18 @@
     }
     .modal-close:hover { background: var(--gray-soft); color: var(--text); }
     .modal-body { padding: 18px 22px; }
+    .dc-table { display: flex; flex-direction: column; gap: 10px; }
+    .dc-row {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 8px 14px; align-items: center;
+      padding: 12px 14px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border);
+    }
+    .dc-row.dc-bad { border-color: var(--red); background: color-mix(in srgb, var(--red) 8%, var(--bg-soft)); }
+    .dc-name { font-weight: 600; color: var(--text); }
+    .dc-uid { font-size: 12px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+    .dc-stat { grid-column: 1 / -1; font-size: 12px; color: var(--text-muted); }
+    .dc-expected { font-size: 13px; font-weight: 600; white-space: nowrap; }
+    .dc-expected.ok { color: var(--green); }
+    .dc-expected.bad { color: var(--red); }
     .modal-foot {
       padding: 12px 22px 18px;
       display: flex; gap: 10px; justify-content: flex-end;
@@ -1212,7 +1224,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.10</span>
+        <span class="version-badge" id="versionBadge">v1.9.11</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -1221,6 +1233,7 @@
         <button class="icon-btn" id="btnHelp" title="使用说明">?</button>
         <button class="icon-btn" id="btnExport" title="导出数据">⬇</button>
         <button class="icon-btn" id="btnImport" title="导入数据">⬆</button>
+        <button class="icon-btn" id="btnDataCheck" title="数据自检 · 总任务进度">🔧</button>
       </div>
     </div>
   </header>
@@ -1611,6 +1624,46 @@
         acc.liXingXiuYuan.remainingPoints = Math.round(parseFloat(val) * 10) / 10;
       }
       saveState();
+    }
+
+    // 根据 checkIns 实际记录重新计算「已完成的任务数」
+    // 业务规则：某自然周(周一为周首, 5点前归上周)打卡满 CHECKINS_PER_TASK(5) 次 = 完成 1 个任务
+    // 该值是确定性的，可从 checkIns 完整还原，用于校准/修复事件驱动维护的 m.tasksDone
+    function recalcTasksDone(acc) {
+      const m = acc.liXingXiuYuan;
+      const weekCounts = {};
+      Object.keys(m.checkIns || {}).forEach(dk => {
+        if (!m.checkIns[dk]) return;
+        const [y, mo, dd] = dk.split('-').map(Number);
+        const d = new Date(y, mo - 1, dd);
+        const wk = getWeekKey(d);
+        weekCounts[wk] = (weekCounts[wk] || 0) + 1;
+      });
+      let done = 0;
+      Object.values(weekCounts).forEach(c => { if (c >= CHECKINS_PER_TASK) done++; });
+      return Math.min(TASK_TOTAL_REQUIRED, done);
+    }
+
+    // 校准单个账号的总任务进度：把 m.tasksDone 修正为基于 checkIns 的应得值
+    // 返回 { before, after, changed } 供 UI 提示；同时维护 finished 标志
+    function calibrateAccount(id) {
+      const acc = findAccount(id);
+      if (!acc) return null;
+      const m = acc.liXingXiuYuan;
+      const before = m.tasksDone || 0;
+      const after = recalcTasksDone(acc);
+      if (before !== after) {
+        m.tasksDone = after;
+        if (after >= TASK_TOTAL_REQUIRED) {
+          m.finished = true;
+          if (!m.finishedAt) m.finishedAt = new Date().toISOString();
+        } else {
+          m.finished = false;
+          m.finishedAt = null;
+        }
+        saveState();
+      }
+      return { before, after, changed: before !== after };
     }
 
     // 历练点颜色阈值
@@ -2383,6 +2436,7 @@
               ${isTodayDone ? `<button class="btn btn-ghost lixy-act" id="btnUndo">撤销打卡</button>` : ''}
               <button class="btn btn-ghost lixy-act" id="btnResetWeek">↺ 重置本周</button>
               <button class="btn btn-danger lixy-act" id="btnResetLixy">⚠ 重置全部</button>
+              <button class="btn btn-ghost lixy-act" id="btnCalibrate" title="按实际打卡记录重新计算总任务进度">🔧 校准进度</button>
             </div>
           </div>
         </section>
@@ -2474,6 +2528,15 @@
       pointsInput?.addEventListener('change', () => {
         updateRemainingPoints(acc.id, pointsInput.value);
         showToast('历练点已更新');
+        render();
+      });
+      // 🔧 校准进度：按实际打卡记录重算总任务进度
+      const btnCal = root.querySelector('#btnCalibrate');
+      if (btnCal) btnCal.addEventListener('click', () => {
+        const r = calibrateAccount(acc.id);
+        if (!r) return;
+        if (r.changed) showToast(`🔧 已校准总任务进度：${r.before} → ${r.after}`);
+        else showToast(`✓ 总任务进度正常（${r.after}/${TASK_TOTAL_REQUIRED}）`);
         render();
       });
     }
@@ -3075,6 +3138,65 @@
         modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
         return;
       }
+
+      if (state.modal === 'dataCheck') {
+        modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        const issues = state.accounts.filter(a => (a.liXingXiuYuan.tasksDone || 0) !== recalcTasksDone(a));
+        modal.innerHTML = `
+          <div class="modal" onclick="event.stopPropagation()" style="max-width:680px">
+            <div class="modal-head">
+              <div class="modal-title">🔧 数据自检 · 总任务进度</div>
+              <button class="modal-close" data-act="close">✕</button>
+            </div>
+            <div class="modal-body">
+              <div class="help-note" style="margin-bottom:12px">
+                每行对比「当前记录的总任务进度」与「按打卡记录重算的应得值」。不一致即为异常（多由撤销/重置/补打卡组合或旧版本迁移导致）。点击「修复」或底部「一键修复」即可纠正。
+              </div>
+              ${state.accounts.length === 0 ? '<div class="empty-state-title">还没有账号</div>' : `
+                <div class="dc-table">
+                  ${state.accounts.map(acc => {
+                    const m = acc.liXingXiuYuan;
+                    const current = m.tasksDone || 0;
+                    const expected = recalcTasksDone(acc);
+                    const ok = current === expected;
+                    const totalCheckIns = Object.values(m.checkIns || {}).filter(Boolean).length;
+                    return `
+                      <div class="dc-row ${ok ? '' : 'dc-bad'}">
+                        <div class="dc-name">${escapeHtml(acc.name)}${acc.uid ? ` <span class="dc-uid">${escapeHtml(acc.uid)}</span>` : ''}</div>
+                        <div class="dc-stat">记录 ${current}/${TASK_TOTAL_REQUIRED} · 累计打卡 ${totalCheckIns} 次</div>
+                        <div class="dc-expected ${ok ? 'ok' : 'bad'}">${ok ? '✓ 正常' : `⚠ 应得 ${expected}/${TASK_TOTAL_REQUIRED}`}</div>
+                        ${ok ? '' : `<button class="btn btn-sm btn-primary" data-fix-one="${acc.id}">修复</button>`}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              `}
+            </div>
+            <div class="modal-foot">
+              <button class="btn" data-act="close">关闭</button>
+              <button class="btn btn-primary" id="btnFixAll">${issues.length ? `✅ 一键修复 ${issues.length} 个异常` : '✓ 全部正常'}</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
+        modal.querySelectorAll('[data-fix-one]').forEach(b => b.addEventListener('click', () => {
+          const r = calibrateAccount(b.dataset.fixOne);
+          if (r && r.changed) showToast(`已校准：${r.before} → ${r.after}`);
+          render();
+        }));
+        const btnFixAll = modal.querySelector('#btnFixAll');
+        if (btnFixAll) btnFixAll.addEventListener('click', () => {
+          if (issues.length === 0) { showToast('✓ 所有账号数据正常'); return; }
+          let n = 0;
+          state.accounts.forEach(a => { const r = calibrateAccount(a.id); if (r && r.changed) n++; });
+          showToast(n > 0 ? `✅ 已修复 ${n} 个账号的总任务进度` : '✓ 全部正常');
+          render();
+        });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        return;
+      }
     }
 
     /* ============================================================
@@ -3418,6 +3540,7 @@
       });
       document.getElementById('btnExport').addEventListener('click', exportData);
       document.getElementById('btnImport').addEventListener('click', importDataFromFile);
+      document.getElementById('btnDataCheck').addEventListener('click', () => { state.modal = 'dataCheck'; render(); });
       document.getElementById('btnChangelog').addEventListener('click', () => {
         state.modal = 'changelog'; render();
       });
