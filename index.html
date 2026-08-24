@@ -1301,6 +1301,84 @@
     }
     .radio-opt.on { border-color: var(--orange); background: rgba(215,122,60,0.12); font-weight: 700; }
 
+    /* ========== v1.9.14：日常活动模块 - 卡片式 2×2 网格 ========== */
+    .daily-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    @media (max-width: 720px) {
+      .daily-grid { grid-template-columns: 1fr; }
+    }
+    .daily-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .daily-card.off { opacity: .82; }
+    .daily-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .daily-card-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .daily-card-title .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .daily-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      line-height: 1.4;
+      letter-spacing: .3px;
+    }
+    .daily-status.s-green   { background: rgba(46,154,108,0.14);  color: #2e9a6c; }
+    .daily-status.s-blue    { background: rgba(58,123,213,0.14);  color: var(--blue); }
+    .daily-status.s-teal    { background: rgba(78,166,163,0.16);  color: #2d807d; }
+    .daily-status.s-purple  { background: rgba(122,92,192,0.16);  color: #5e44a8; }
+    .daily-status.s-orange  { background: rgba(215,122,60,0.16);  color: var(--orange); }
+    .daily-status.s-red     { background: rgba(201,69,69,0.16);   color: var(--red); }
+    .daily-status.s-gray    { background: rgba(120,120,120,0.14); color: var(--text-muted); }
+    .daily-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .daily-card-body .help-note-inline { margin-top: 0; }
+    .daily-card .field-row { margin-top: 0; }
+    .daily-card .remain-bar { margin-top: 0; }
+    .daily-card .select-pair { margin-top: 0; }
+    .daily-card .state-machine { margin-top: 4px; }
+    .daily-card .elem-picker { margin-top: 4px; }
+    .daily-card .stygian-list { margin-top: 0; }
+    .daily-card .stygian-row { padding: 6px 8px; }
+    .daily-card-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 2px 0 4px;
+    }
+
     /* ========== 选择器（下拉对） ========== */
     .select-pair {
       display: grid;
@@ -1337,7 +1415,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.13</span>
+        <span class="version-badge" id="versionBadge">v1.9.14</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2813,7 +2891,7 @@
       });
     }
 
-    // ===== 详情页 - 日常活动 Tab（v1.9.13 重构） =====
+    // ===== 详情页 - 日常活动 Tab（v1.9.14 卡片化 2×2） =====
     function renderDetailDaily(acc, d, spiral, theatre, stygian) {
       spiral = spiral || { participated: false, currentFloor: 1, currentChamber: 1, completed: false };
       theatre = theatre || { participated: false, elements: [] };
@@ -2851,182 +2929,221 @@
       // 限制元素已选集合
       const theatreSel = Array.isArray(theatre.elements) ? theatre.elements : [];
 
-      return `
-        <section class="card module-card">
-          <!-- 子区块 1：日常活动 -->
-          <div class="sub-section">
-            <div class="sub-section-head">
-              <div class="sub-section-title">
-                <span class="dot" style="background:var(--blue)"></span>
-                <span>日常活动</span>
-              </div>
+      // ─────────── 卡片 1：日常活动 ───────────
+      const dailyStage   = d.stage || 'none';
+      const dailyLabel   = d.participated ? (DAILY_STAGE_LABELS[dailyStage] || '待接取') : '未参与';
+      const dailyStatusCls = !d.participated ? 's-gray'
+        : dailyStage === 'completed'   ? 's-green'
+        : dailyStage === 'in_progress' ? 's-orange'
+        : dailyStage === 'pending'     ? 's-blue'
+        :                                's-gray';
+      const card1 = `
+        <div class="daily-card ${d.participated ? '' : 'off'}">
+          <div class="daily-card-head">
+            <div class="daily-card-title">
+              <span class="dot" style="background:var(--blue)"></span>
+              <span>日常活动</span>
+            </div>
+            <span class="daily-status ${dailyStatusCls}">${dailyLabel}</span>
+          </div>
+          <div class="daily-card-body">
+            <div class="field-row">
+              <label class="field-label">参与开关</label>
               <label class="switch switch-blue">
                 <input type="checkbox" data-toggle="daily" ${d.participated ? 'checked' : ''}>
                 <span class="switch-slider"></span>
               </label>
             </div>
             ${d.participated ? `
-              <div class="sub-section-body">
-                <div class="field-row">
-                  <label class="field-label">活动截止时间</label>
-                  <input type="date" class="field-input" data-daily-deadline value="${d.deadline || ''}">
-                </div>
-                ${dailyRemainHtml}
-                ${d.stage === 'none' ? `
-                  <div class="help-note">暂无活动。开启「参与」开关后进入「待接取」。</div>
-                ` : `
-                  <div class="state-machine">
-                    ${DAILY_STAGES.map(s => `
-                      <button class="sm-state ${d.stage === s ? 'current ' + s : ''}" data-set-progress="${s}">
-                        ${DAILY_STAGE_LABELS[s]}
-                      </button>
-                    `).join('')}
-                  </div>
-                  <div class="action-bar">
-                    <button class="btn btn-blue" id="btnAdvanceProgress" ${d.stage === 'completed' ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
-                      ⏩ 推进到下一阶段
+              <div class="field-row">
+                <label class="field-label">活动截止时间</label>
+                <input type="date" class="field-input" data-daily-deadline value="${d.deadline || ''}">
+              </div>
+              ${dailyRemainHtml}
+              ${d.stage === 'none' ? `
+                <div class="help-note">暂无活动。开启参与开关后进入「待接取」。</div>
+              ` : `
+                <div class="state-machine">
+                  ${DAILY_STAGES.map(s => `
+                    <button class="sm-state ${d.stage === s ? 'current ' + s : ''}" data-set-progress="${s}">
+                      ${DAILY_STAGE_LABELS[s]}
                     </button>
-                  </div>
-                `}
-              </div>
-            ` : `
-              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启参与后可设置活动截止时间并跟踪进度（暂无活动）。</div>
-            `}
+                  `).join('')}
+                </div>
+                <div class="action-bar">
+                  <button class="btn btn-blue" id="btnAdvanceProgress" ${d.stage === 'completed' ? 'disabled style="opacity:.5;cursor:not-allowed"' : ''}>
+                    ⏩ 推进到下一阶段
+                  </button>
+                </div>
+              `}
+            ` : `<div class="daily-card-empty">开启后可设置活动截止时间并跟踪日常任务进度。</div>`}
           </div>
+        </div>
+      `;
 
-          <!-- 子区块 2：深境螺旋 -->
-          <div class="sub-section">
-            <div class="sub-section-head">
-              <div class="sub-section-title">
-                <span class="dot" style="background:var(--teal)"></span>
-                <span>深境螺旋</span>
-              </div>
+      // ─────────── 卡片 2：深境螺旋 ───────────
+      const spiralLabel    = !spiral.participated ? '未参与' : (spiral.completed ? '已通关' : '进行中');
+      const spiralStatusCls = !spiral.participated ? 's-gray' : (spiral.completed ? 's-green' : 's-teal');
+      const card2 = `
+        <div class="daily-card ${spiral.participated ? '' : 'off'}">
+          <div class="daily-card-head">
+            <div class="daily-card-title">
+              <span class="dot" style="background:var(--teal)"></span>
+              <span>深境螺旋</span>
+            </div>
+            <span class="daily-status ${spiralStatusCls}">${spiralLabel}</span>
+          </div>
+          <div class="daily-card-body">
+            <div class="field-row">
+              <label class="field-label">参与开关</label>
               <label class="switch switch-blue-2">
                 <input type="checkbox" data-toggle="spiral" ${spiral.participated ? 'checked' : ''}>
                 <span class="switch-slider"></span>
               </label>
             </div>
             ${spiral.participated ? `
-              <div class="sub-section-body">
-                <div class="help-note">周期固定：本月 16 日 → 下月 15 日，每月重置。</div>
-                <div class="remain-bar">
-                  <div class="remain-track"><div class="remain-fill" style="width:${Math.round(spiralRemain.ratio*100)}%;background:${spiralRemain.color}"></div></div>
-                  <span class="remain-label" style="color:${spiralRemain.color}">${spiralRemain.label}（至 ${spiralEnd}）</span>
+              <div class="help-note-inline">周期固定：本月 16 日 → 下月 15 日，每月重置。</div>
+              <div class="remain-bar">
+                <div class="remain-track"><div class="remain-fill" style="width:${Math.round(spiralRemain.ratio*100)}%;background:${spiralRemain.color}"></div></div>
+                <span class="remain-label" style="color:${spiralRemain.color}">${spiralRemain.label}（至 ${spiralEnd}）</span>
+              </div>
+              <div class="select-pair">
+                <div>
+                  <label>层数</label>
+                  <select class="field-select" data-spiral-floor>
+                    ${Array.from({length:12},(_,i)=>i+1).map(f => `<option value="${f}" ${spiral.currentFloor==f?'selected':''}>第${f}层</option>`).join('')}
+                  </select>
                 </div>
-                <div class="select-pair">
-                  <div>
-                    <label>层数</label>
-                    <select class="field-select" data-spiral-floor>
-                      ${Array.from({length:12},(_,i)=>i+1).map(f => `<option value="${f}" ${spiral.currentFloor==f?'selected':''}>第${f}层</option>`).join('')}
-                    </select>
-                  </div>
-                  <div>
-                    <label>间数</label>
-                    <select class="field-select" data-spiral-chamber>
-                      ${[1,2,3].map(c => `<option value="${c}" ${spiral.currentChamber==c?'selected':''}>第${c}间</option>`).join('')}
-                    </select>
-                  </div>
-                </div>
-                <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
-                  <input type="checkbox" id="chkSpiralDone" ${spiral.completed ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer" />
-                  <label for="chkSpiralDone" style="font-size:13px;color:var(--text);cursor:pointer">本期已完成通关</label>
+                <div>
+                  <label>间数</label>
+                  <select class="field-select" data-spiral-chamber>
+                    ${[1,2,3].map(c => `<option value="${c}" ${spiral.currentChamber==c?'selected':''}>第${c}间</option>`).join('')}
+                  </select>
                 </div>
               </div>
-            ` : `
-              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后可记录当前挑战进度。</div>
-            `}
+              <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+                <input type="checkbox" id="chkSpiralDone" ${spiral.completed ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer" />
+                <label for="chkSpiralDone" style="font-size:13px;color:var(--text);cursor:pointer">本期已完成通关</label>
+              </div>
+            ` : `<div class="daily-card-empty">开启后可记录当前挑战进度。</div>`}
           </div>
+        </div>
+      `;
 
-          <!-- 子区块 3：幻想真境剧诗 -->
-          <div class="sub-section">
-            <div class="sub-section-head">
-              <div class="sub-section-title">
-                <span class="dot" style="background:#7a5cc0"></span>
-                <span>幻想真境剧诗</span>
-              </div>
+      // ─────────── 卡片 3：幻想真境剧诗 ───────────
+      const theatreLabel    = theatre.participated ? '进行中' : '未参与';
+      const theatreStatusCls = theatre.participated ? 's-purple' : 's-gray';
+      const card3 = `
+        <div class="daily-card ${theatre.participated ? '' : 'off'}">
+          <div class="daily-card-head">
+            <div class="daily-card-title">
+              <span class="dot" style="background:#7a5cc0"></span>
+              <span>幻想真境剧诗</span>
+            </div>
+            <span class="daily-status ${theatreStatusCls}">${theatreLabel}</span>
+          </div>
+          <div class="daily-card-body">
+            <div class="field-row">
+              <label class="field-label">参与开关</label>
               <label class="switch switch-purple">
                 <input type="checkbox" data-toggle="theatre" ${theatre.participated ? 'checked' : ''}>
                 <span class="switch-slider"></span>
               </label>
             </div>
             ${theatre.participated ? `
-              <div class="sub-section-body">
-                <div class="help-note">周期固定：当月 1 日 → 月底，每月重置。</div>
-                <div class="remain-bar">
-                  <div class="remain-track"><div class="remain-fill" style="width:${Math.round(theatreRemain.ratio*100)}%;background:${theatreRemain.color}"></div></div>
-                  <span class="remain-label" style="color:${theatreRemain.color}">${theatreRemain.label}（至 ${theatreEnd}）</span>
-                </div>
-                <div class="field-label" style="margin-top:10px">当期限制元素（最多 3 个）</div>
-                <div class="elem-show">
-                  ${theatreSel.length ? theatreSel.map(k => {
-                    const el = GENSHIN_ELEMENTS.find(e => e.key === k);
-                    return el ? `<span class="elem-badge" style="background:${el.color}">${el.name}</span>` : '';
-                  }).join('') : '<span class="help-note-inline">尚未设置限制元素</span>'}
-                </div>
-                <div class="elem-picker">
-                  ${GENSHIN_ELEMENTS.map(e => `
-                    <button class="elem-opt ${theatreSel.includes(e.key) ? 'on' : ''}" data-elem="${e.key}" ${theatreSel.length >= 3 && !theatreSel.includes(e.key) ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>
-                      <span class="elem-dot" style="background:${e.color}"></span>${e.name}
-                    </button>
-                  `).join('')}
-                </div>
+              <div class="help-note-inline">周期固定：当月 1 日 → 月底，每月重置。</div>
+              <div class="remain-bar">
+                <div class="remain-track"><div class="remain-fill" style="width:${Math.round(theatreRemain.ratio*100)}%;background:${theatreRemain.color}"></div></div>
+                <span class="remain-label" style="color:${theatreRemain.color}">${theatreRemain.label}（至 ${theatreEnd}）</span>
               </div>
-            ` : `
-              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后此账号将纳入该模块汇总统计。</div>
-            `}
+              <div class="field-label" style="margin-top:2px">当期限制元素（最多 3 个）</div>
+              <div class="elem-show">
+                ${theatreSel.length ? theatreSel.map(k => {
+                  const el = GENSHIN_ELEMENTS.find(e => e.key === k);
+                  return el ? `<span class="elem-badge" style="background:${el.color}">${el.name}</span>` : '';
+                }).join('') : '<span class="help-note-inline">尚未设置限制元素</span>'}
+              </div>
+              <div class="elem-picker">
+                ${GENSHIN_ELEMENTS.map(e => `
+                  <button class="elem-opt ${theatreSel.includes(e.key) ? 'on' : ''}" data-elem="${e.key}" ${theatreSel.length >= 3 && !theatreSel.includes(e.key) ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>
+                    <span class="elem-dot" style="background:${e.color}"></span>${e.name}
+                  </button>
+                `).join('')}
+              </div>
+            ` : `<div class="daily-card-empty">开启后此账号将纳入该模块汇总统计。</div>`}
           </div>
+        </div>
+      `;
 
-          <!-- 子区块 4：幽境危战 -->
-          <div class="sub-section">
-            <div class="sub-section-head">
-              <div class="sub-section-title">
-                <span class="dot" style="background:var(--orange)"></span>
-                <span>幽境危战</span>
-              </div>
+      // ─────────── 卡片 4：幽境危战 ───────────
+      const stygianDoneNum = (stygian.challenges || []).filter(c => c && c.done === 'yes').length;
+      const stygianLabel   = !stygian.participated ? '未参与'
+        : (stygianDoneNum === STYGIAN_DIFFICULTIES.length ? `${stygianDoneNum}/${STYGIAN_DIFFICULTIES.length} 已完成` : `进行中 ${stygianDoneNum}/${STYGIAN_DIFFICULTIES.length}`);
+      const stygianStatusCls = !stygian.participated ? 's-gray'
+        : (stygianDoneNum === STYGIAN_DIFFICULTIES.length ? 's-green' : 's-orange');
+      const card4 = `
+        <div class="daily-card ${stygian.participated ? '' : 'off'}">
+          <div class="daily-card-head">
+            <div class="daily-card-title">
+              <span class="dot" style="background:var(--orange)"></span>
+              <span>幽境危战</span>
+            </div>
+            <span class="daily-status ${stygianStatusCls}">${stygianLabel}</span>
+          </div>
+          <div class="daily-card-body">
+            <div class="field-row">
+              <label class="field-label">参与开关</label>
               <label class="switch switch-orange">
                 <input type="checkbox" data-toggle="stygian" ${stygian.participated ? 'checked' : ''}>
                 <span class="switch-slider"></span>
               </label>
             </div>
             ${stygian.participated ? `
-              <div class="sub-section-body">
-                <div class="field-row">
-                  <label class="field-label">活动开启日期</label>
-                  <input type="date" class="field-input" data-stygian-date="startDate" value="${stygian.startDate || ''}">
-                </div>
-                <div class="field-row">
-                  <label class="field-label">活动截止时间</label>
-                  <input type="date" class="field-input" data-stygian-date="deadline" value="${stygian.deadline || ''}">
-                </div>
-                ${stygianRemain ? `
-                  <div class="remain-bar">
-                    <div class="remain-track"><div class="remain-fill" style="width:${Math.round(stygianRemain.ratio*100)}%;background:${stygianRemain.color}"></div></div>
-                    <span class="remain-label" style="color:${stygianRemain.color}">活动${stygianRemain.label}</span>
-                  </div>
-                ` : '<div class="help-note-inline warn">⚠ 参与幽境危战需设置活动截止时间</div>'}
-                <div class="remain-bar">
-                  <div class="remain-track"><div class="remain-fill" style="width:${stygianBurst ? Math.round(stygianBurst.ratio*100) : 0}%;background:${stygianBurst ? stygianBurst.color : 'var(--gray)'}"></div></div>
-                  <span class="remain-label" style="color:${stygianBurst ? stygianBurst.color : 'var(--gray)'}">${stygianBurst ? ('爆发期' + stygianBurst.label) : (stygian.startDate ? '爆发期已结束' : '爆发期（开启后10天）未设置开启日期')}</span>
-                </div>
-                <div class="field-label" style="margin-top:12px">完成情况</div>
-                <div class="stygian-list">
-                  ${STYGIAN_DIFFICULTIES.map((name, i) => {
-                    const c = stygian.challenges[i] || { done: null };
-                    return `
-                      <div class="stygian-row">
-                        <span class="stygian-name">幽境危战 ${i+1}－${name}</span>
-                        <div class="radio-group">
-                          <label class="radio-opt ${c.done === 'no' ? 'on' : ''}"><input type="radio" name="stygian_${i}" data-stygian-ch="${i}" value="no" ${c.done === 'no' ? 'checked' : ''}>未完成</label>
-                          <label class="radio-opt ${c.done === 'yes' ? 'on' : ''}"><input type="radio" name="stygian_${i}" data-stygian-ch="${i}" value="yes" ${c.done === 'yes' ? 'checked' : ''}>已完成</label>
-                        </div>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
+              <div class="field-row">
+                <label class="field-label">活动开启日期</label>
+                <input type="date" class="field-input" data-stygian-date="startDate" value="${stygian.startDate || ''}">
               </div>
-            ` : `
-              <div style="font-size:12px;color:var(--text-muted);padding:8px 0">开启后此账号将纳入该模块汇总统计。</div>
-            `}
+              <div class="field-row">
+                <label class="field-label">活动截止时间</label>
+                <input type="date" class="field-input" data-stygian-date="deadline" value="${stygian.deadline || ''}">
+              </div>
+              ${stygianRemain ? `
+                <div class="remain-bar">
+                  <div class="remain-track"><div class="remain-fill" style="width:${Math.round(stygianRemain.ratio*100)}%;background:${stygianRemain.color}"></div></div>
+                  <span class="remain-label" style="color:${stygianRemain.color}">活动${stygianRemain.label}</span>
+                </div>
+              ` : '<div class="help-note-inline warn">⚠ 参与幽境危战需设置活动截止时间</div>'}
+              <div class="remain-bar">
+                <div class="remain-track"><div class="remain-fill" style="width:${stygianBurst ? Math.round(stygianBurst.ratio*100) : 0}%;background:${stygianBurst ? stygianBurst.color : 'var(--gray)'}"></div></div>
+                <span class="remain-label" style="color:${stygianBurst ? stygianBurst.color : 'var(--gray)'}">${stygianBurst ? ('爆发期' + stygianBurst.label) : (stygian.startDate ? '爆发期已结束' : '爆发期（开启后10天）未设置开启日期')}</span>
+              </div>
+              <div class="field-label" style="margin-top:4px">完成情况</div>
+              <div class="stygian-list">
+                ${STYGIAN_DIFFICULTIES.map((name, i) => {
+                  const c = stygian.challenges[i] || { done: null };
+                  return `
+                    <div class="stygian-row">
+                      <span class="stygian-name">幽境危战 ${i+1}－${name}</span>
+                      <div class="radio-group">
+                        <label class="radio-opt ${c.done === 'no' ? 'on' : ''}"><input type="radio" name="stygian_${i}" data-stygian-ch="${i}" value="no" ${c.done === 'no' ? 'checked' : ''}>未完成</label>
+                        <label class="radio-opt ${c.done === 'yes' ? 'on' : ''}"><input type="radio" name="stygian_${i}" data-stygian-ch="${i}" value="yes" ${c.done === 'yes' ? 'checked' : ''}>已完成</label>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            ` : `<div class="daily-card-empty">开启后此账号将纳入该模块汇总统计。</div>`}
+          </div>
+        </div>
+      `;
+
+      return `
+        <section class="card module-card">
+          <div class="daily-grid">
+            ${card1}
+            ${card2}
+            ${card3}
+            ${card4}
           </div>
         </section>
       `;
@@ -3237,6 +3354,21 @@
               <button class="modal-close" data-act="close">✕</button>
             </div>
             <div class="modal-body about" style="max-height:60vh;overflow-y:auto">
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.14 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>日常活动四板块卡片化</strong>：
+                    <ul style="margin-top:4px">
+                      <li>详情页「日常活动」区四个子板块（日常活动 / 深境螺旋 / 幻想真境剧诗 / 幽境危战）改为 <strong>2×2 卡片网格</strong> 呈现——参照「账号列表卡片」视觉规范：白底圆角、阴影、绿色圆点标题、右侧胶囊状态徽章、紧凑控件间距</li>
+                      <li>每张卡片顶部新增<strong>状态徽章</strong>：日常活动=阶段标签（待接取/进行中/已完成）；深境螺旋=未参与/进行中/已通关；幻想真境剧诗=未参与/进行中；幽境危战=未参与/进行中+完成难度数/5</li>
+                      <li>参与开关从原本的标题右侧移到卡片 body 内首行（与"参与开关"标签并排），让状态徽章独占头部右侧更突出</li>
+                      <li><strong>完全保留</strong>所有现有控件：截止日期 / 状态机切换 / 推进按钮 / 层间数下拉 / 通关勾选 / 元素挑选 / 5 难度单选 / 爆发期剩余条，零功能损失</li>
+                      <li>小屏（≤720px）自动退化为单列堆叠，避免拥挤</li>
+                      <li>未参与的卡片自动降低不透明度（82%），弱化非关键信息</li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.13 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24</span></div>
                 <ul style="margin-top:6px">
