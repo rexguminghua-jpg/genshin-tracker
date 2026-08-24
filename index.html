@@ -983,13 +983,25 @@
     .summary-table tr.row-attention:hover { background: rgba(212, 168, 73, 0.09); }
     .summary-table tr.row-done { opacity: 0.5; }
     .summary-table tr.row-done:hover { opacity: 0.7; }
+    .acct-paused-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      background: var(--gray-soft);
+      color: var(--gray);
+      vertical-align: middle;
+    }
     .mini-progress { display: flex; align-items: center; gap: 6px; }
     .mini-bar {
       width: 56px; height: 5px;
       background: var(--gray-soft);
       border-radius: 999px; overflow: hidden;
     }
-    .mini-bar-fill { height: 100%; border-radius: 999px; }
+    .mini-bar-fill { height: 100%; border-radius: 999px; transition: background .2s; }
+    .mini-bar-fill.paused { background: var(--gray) !important; opacity: 0.45; }
+    .mini-num.paused { color: var(--gray); }
     .mini-num { font-size: 12px; font-weight: 700; min-width: 28px; text-align: right; }
     .check-icon { font-size: 15px; line-height: 1; }
     .points-tag {
@@ -2421,6 +2433,16 @@
 
       const [c1, c2] = accountAvatarColor(acc.name);
 
+      // 本周参与关闭（且本期参与且未收官且本周未达 5/5）：加 ⏸本周暂停 徽章 + 进度条变灰
+      const weekPaused = m.participated && !m.finished && !m.weekParticipated && weekCount < CHECKINS_PER_TASK;
+      const pausedBadge = weekPaused
+        ? `<span class="acct-paused-badge" title="本周参与已关闭，已打卡数据保留">⏸ 本周暂停</span>`
+        : '';
+      const lxyBarCls = weekPaused ? 'paused' : '';
+      const weekBarCls = weekPaused ? 'paused' : '';
+      const lxyNumCls = weekPaused ? 'mini-num paused' : 'mini-num';
+      const weekNumCls = weekPaused ? 'mini-num paused' : 'mini-num';
+
       return `
         <tr class="${rowCls}">
           <td style="text-align:center;font-size:18px">${m.focusTraining ? '⭐' : ''}</td>
@@ -2428,7 +2450,7 @@
             <div class="acct-cell">
               <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
               <div>
-                <div class="acct-cell-name">${escapeHtml(acc.name)}</div>
+                <div class="acct-cell-name">${escapeHtml(acc.name)}${pausedBadge}</div>
                 <div style="font-size:11px;color:var(--text-faint)">${acc.uid ? 'UID ' + escapeHtml(acc.uid) : escapeHtml(acc.server)}</div>
               </div>
             </div>
@@ -2436,8 +2458,8 @@
           <td>
             ${m.participated ? `
               <div class="mini-progress">
-                <div class="mini-bar"><div class="mini-bar-fill" style="width:${tasksDone / TASK_TOTAL_REQUIRED * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div></div>
-                <span class="mini-num">${tasksDone}/${TASK_TOTAL_REQUIRED}</span>
+                <div class="mini-bar"><div class="mini-bar-fill ${lxyBarCls}" style="width:${tasksDone / TASK_TOTAL_REQUIRED * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div></div>
+                <span class="${lxyNumCls}">${tasksDone}/${TASK_TOTAL_REQUIRED}</span>
               </div>
             ` : '<span style="color:var(--text-faint)">未参与</span>'}
           </td>
@@ -2445,8 +2467,8 @@
             ${m.participated && !m.finished ? (weekCount >= CHECKINS_PER_TASK
               ? '<span style="color:var(--green);font-weight:600">本周完成</span>'
               : `<div class="mini-progress">
-                <div class="mini-bar"><div class="mini-bar-fill" style="width:${weekCount / CHECKINS_PER_TASK * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div></div>
-                <span class="mini-num">${weekCount}/${CHECKINS_PER_TASK}</span>
+                <div class="mini-bar"><div class="mini-bar-fill ${weekBarCls}" style="width:${weekCount / CHECKINS_PER_TASK * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div></div>
+                <span class="${weekNumCls}">${weekCount}/${CHECKINS_PER_TASK}</span>
               </div>`)
               : m.finished ? '<span style="color:var(--green);font-weight:600">收官</span>' : '<span style="color:var(--text-faint)">—</span>'}
           </td>
@@ -3367,6 +3389,19 @@
                       <li>未参与的卡片自动降低不透明度（82%），弱化非关键信息</li>
                     </ul>
                   </li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.14 micro <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24（汇总表：本周暂停标记）</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>汇总表本周暂停标记</strong>：账号列表表格中，对「本期参与 + 本周参与关闭 + 本周未满 5/5」的账号行：
+                    <ul style="margin-top:4px">
+                      <li>账号名旁追加灰色胶囊 <code>⏸ 本周暂停</code>（hover 提示"已有打卡数据保留"）</li>
+                      <li>该行的「砺行修远(累计)」「本周打卡」两列进度条及数字统一<strong>变灰</strong>（与"已完成"行的弱化区分）</li>
+                      <li>不影响其他状态（未参与 / 已完成 / 本周收官 / 已满 5/5）——只在「暂停中」这一种情况触发</li>
+                    </ul>
+                  </li>
+                  <li><strong>文案微调</strong>：控制开关区「⭐ 本周期重点」改为「⭐ 入卡池」；帮助文档同步 2 处（见 v1.9.14 上一条目）</li>
                 </ul>
               </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
