@@ -1427,7 +1427,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.14</span>
+        <span class="version-badge" id="versionBadge">v1.9.15</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -1804,6 +1804,22 @@
       return !!acc.liXingXiuYuan.checkIns[todayKey()];
     }
 
+    // v1.9.15：查找「时间模板」——其他账号已设置的开始/截止时间，供新开启参与的账号自动复用
+    // moduleKey: 'stygianOnslaught'（需同时有 startDate + deadline）| 'dailyActivities'（需有 deadline）
+    function findTimeTemplate(moduleKey, excludeId) {
+      for (const a of state.accounts) {
+        if (a.id === excludeId) continue;
+        if (moduleKey === 'stygianOnslaught') {
+          const s = a.stygianOnslaught;
+          if (s && s.startDate && s.deadline) return { startDate: s.startDate, deadline: s.deadline };
+        } else if (moduleKey === 'dailyActivities') {
+          const d = a.dailyActivities;
+          if (d && d.deadline) return { startDate: null, deadline: d.deadline };
+        }
+      }
+      return null;
+    }
+
     // 切「参与」
     function toggleParticipate(id, moduleKey) {
       const acc = findAccount(id);
@@ -1814,6 +1830,14 @@
       // v1.9.13：日常活动——开启即转「待接取」，关闭即回落「暂无活动」
       if (moduleKey === 'dailyActivities') {
         mod.stage = willOn ? 'pending' : 'none';
+        // v1.9.15：开启参与且本账号尚未设截止时间时，自动复用其他账号已设置的截止时间
+        if (willOn && !mod.deadline) {
+          const tpl = findTimeTemplate('dailyActivities', acc.id);
+          if (tpl) {
+            mod.deadline = tpl.deadline;
+            showToast('已自动填入活动截止时间（复用其他账号）');
+          }
+        }
       }
       saveState();
     }
@@ -2183,7 +2207,17 @@
     function toggleStygian(id) {
       const acc = findAccount(id);
       if (!acc) return;
-      acc.stygianOnslaught.participated = !acc.stygianOnslaught.participated;
+      const willOn = !acc.stygianOnslaught.participated;
+      acc.stygianOnslaught.participated = willOn;
+      // v1.9.15：开启参与且本账号尚未设时间时，自动复用其他账号已设置的开启/截止时间
+      if (willOn && !acc.stygianOnslaught.deadline) {
+        const tpl = findTimeTemplate('stygianOnslaught', acc.id);
+        if (tpl) {
+          acc.stygianOnslaught.startDate = tpl.startDate;
+          acc.stygianOnslaught.deadline = tpl.deadline;
+          showToast('已自动填入开启/截止时间（复用其他账号）');
+        }
+      }
       saveState();
     }
 
