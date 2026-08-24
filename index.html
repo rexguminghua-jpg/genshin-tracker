@@ -3463,7 +3463,7 @@
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
                 <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.14 micro+2 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24（账号卡片：今日已打卡状态修正）</span></div>
                 <ul style="margin-top:6px">
-                  <li><strong>Bug 修正</strong>：账号列表卡片「砺行修远」右侧徽章在「今日已打卡」时显示"本日暂停"（灰色）——措辞与"本周暂停"混淆、状态色错误
+                  <li><strong>Bug 修正</strong>：账号列表卡片「砺行修远」右侧徽章在「今日已打卡」时文案与"本周暂停"易混淆、状态色错误（灰色 <code>status-skip</code>）
                     <ul style="margin-top:4px">
                       <li>改为「<strong>今日已打卡</strong>」（绿色 <code>status-done</code>），与汇总表今日打卡列的 ✅ 视觉一致</li>
                       <li>触发条件不变：仅当 <code>isTodayChecked(acc) === true</code>（参与 + 未收官 + 本周未满 5/5 + 今天已打）</li>
