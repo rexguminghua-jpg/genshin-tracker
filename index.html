@@ -2600,7 +2600,7 @@
       } else if (weekCount >= CHECKINS_PER_TASK) {
         lxyStatusHtml = `<span class="status-pill status-done"><span class="dot"></span>本周任务已完成</span>`;
       } else if (isTodayDone) {
-        lxyStatusHtml = `<span class="status-pill status-skip"><span class="dot"></span>本日暂停</span>`;
+        lxyStatusHtml = `<span class="status-pill status-done"><span class="dot"></span>今日已打卡</span>`;
       } else {
         lxyStatusHtml = `<span class="status-pill status-active"><span class="dot"></span>待今日打卡</span>`;
       }
@@ -3456,6 +3456,17 @@
                       <li>第 3 优先：排除 1/2 后，入卡池（⭐）账号排于非星标账号之上</li>
                       <li>第 4 优先：砺行修远进度 / 本周打卡进度 / 今日打卡进度（均<strong>高进度靠前</strong>）</li>
                       <li>第 5 优先：以上都一致时按剩余历练点（高→低）兜底</li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.14 micro+2 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24（账号卡片：今日已打卡状态修正）</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>Bug 修正</strong>：账号列表卡片「砺行修远」右侧徽章在「今日已打卡」时显示"本日暂停"（灰色）——措辞与"本周暂停"混淆、状态色错误
+                    <ul style="margin-top:4px">
+                      <li>改为「<strong>今日已打卡</strong>」（绿色 <code>status-done</code>），与汇总表今日打卡列的 ✅ 视觉一致</li>
+                      <li>触发条件不变：仅当 <code>isTodayChecked(acc) === true</code>（参与 + 未收官 + 本周未满 5/5 + 今天已打）</li>
                     </ul>
                   </li>
                 </ul>
