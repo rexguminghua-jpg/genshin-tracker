@@ -2242,8 +2242,50 @@
     }
 
     /* ---- 汇总页 ---- */
+    // 汇总页排序规则（v1.9.14 micro+1）：
+    //  1) 不参与砺行修远的账号置最底
+    //  2) 标记为本周暂停的账号置下方（高于不参与）
+    //  3) 排除 1/2 后：带星标（入卡池）排于非星标之上
+    //  4) 砺行修远进度 / 本周打卡进度 / 今日打卡进度（均为高进度靠前）
+    //  5) 以上都一致时以剩余历练点（高靠前）兜底
+    function sortSummaryList(list) {
+      const tier = (acc) => {
+        const m = acc.liXingXiuYuan || {};
+        if (!m.participated) return 3;  // 不参与砺行修远
+        const weekPaused = m.participated && !m.finished && !m.weekParticipated && weekCheckIns(acc) < CHECKINS_PER_TASK;
+        if (weekPaused) return 2;       // 本周暂停
+        return 1;                       // 参与且本周正常
+      };
+      const cmp = (a, b) => {
+        const ta = tier(a), tb = tier(b);
+        if (ta !== tb) return ta - tb;  // 1<2<3 升序
+        // 同层内：星标优先
+        const sa = !!(a.liXingXiuYuan && a.liXingXiuYuan.focusTraining);
+        const sb = !!(b.liXingXiuYuan && b.liXingXiuYuan.focusTraining);
+        if (sa !== sb) return sa ? -1 : 1;
+        // 砺行修远进度（高→低）
+        const la = (a.liXingXiuYuan && a.liXingXiuYuan.tasksDone) || 0;
+        const lb = (b.liXingXiuYuan && b.liXingXiuYuan.tasksDone) || 0;
+        if (la !== lb) return lb - la;
+        // 本周打卡（高→低）
+        const wa = weekCheckIns(a);
+        const wb = weekCheckIns(b);
+        if (wa !== wb) return wb - wa;
+        // 今日打卡（已打卡优先于未打，高→低；1=已打，0=未打）
+        const da = isTodayChecked(a) ? 1 : 0;
+        const db = isTodayChecked(b) ? 1 : 0;
+        if (da !== db) return db - da;
+        // 剩余历练点（高→低）
+        const pa = (a.liXingXiuYuan && a.liXingXiuYuan.remainingPoints) || 0;
+        const pb = (b.liXingXiuYuan && b.liXingXiuYuan.remainingPoints) || 0;
+        if (pa !== pb) return pb - pa;
+        return 0;
+      };
+      return list.slice().sort(cmp);
+    }
+
     function renderSummaryPage() {
-      const list = state.accounts;
+      const list = sortSummaryList(state.accounts);
       const s = computeSummary();
       const lxyPct = s.total ? (s.lxyParticipated / s.total * 100) : 0;
       const lxyFinPct = s.total ? (s.lxyFinished / s.total * 100) : 0;
@@ -3402,6 +3444,20 @@
                     </ul>
                   </li>
                   <li><strong>文案微调</strong>：控制开关区「⭐ 本周期重点」改为「⭐ 入卡池」；帮助文档同步 2 处（见 v1.9.14 上一条目）</li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.14 micro+1 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24（汇总表账号排序规则）</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>汇总明细表排序</strong>（仅汇总页账号进度明细表，账号列表页不变）：
+                    <ul style="margin-top:4px">
+                      <li>第 1 优先：不参与砺行修远的账号置最底</li>
+                      <li>第 2 优先：标记为本周暂停的账号置下方（高于不参与）</li>
+                      <li>第 3 优先：排除 1/2 后，入卡池（⭐）账号排于非星标账号之上</li>
+                      <li>第 4 优先：砺行修远进度 / 本周打卡进度 / 今日打卡进度（均<strong>高进度靠前</strong>）</li>
+                      <li>第 5 优先：以上都一致时按剩余历练点（高→低）兜底</li>
+                    </ul>
+                  </li>
                 </ul>
               </div>
               <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
