@@ -2597,6 +2597,8 @@
         lxyStatusHtml = `<span class="status-pill status-skip"><span class="dot"></span>未参与</span>`;
       } else if (m.finished) {
         lxyStatusHtml = `<span class="status-pill status-done"><span class="dot"></span>已完成</span>`;
+      } else if (!m.weekParticipated && weekCount < CHECKINS_PER_TASK) {
+        lxyStatusHtml = `<span class="status-pill status-paused"><span class="dot"></span>本周已暂停</span>`;
       } else if (weekCount >= CHECKINS_PER_TASK) {
         lxyStatusHtml = `<span class="status-pill status-done"><span class="dot"></span>本周任务已完成</span>`;
       } else if (isTodayDone) {
@@ -3456,6 +3458,18 @@
                       <li>第 3 优先：排除 1/2 后，入卡池（⭐）账号排于非星标账号之上</li>
                       <li>第 4 优先：砺行修远进度 / 本周打卡进度 / 今日打卡进度（均<strong>高进度靠前</strong>）</li>
                       <li>第 5 优先：以上都一致时按剩余历练点（高→低）兜底</li>
+                    </ul>
+                  </li>
+                </ul>
+              </div>
+              <div style="margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+                <div style="font-size:15px;font-weight:700;color:var(--text)">v1.9.14 micro+3 <span style="font-size:12px;color:var(--text-muted);font-weight:400">— 2026-08-24（账号卡片：新增"本周已暂停"徽章分支）</span></div>
+                <ul style="margin-top:6px">
+                  <li><strong>Bug 修正</strong>：账号列表卡片「砺行修远」徽章在「本周暂停」账号上误显示"待今日打卡"（应反映本周暂停语义）
+                    <ul style="margin-top:4px">
+                      <li>新判断链：未参与 → 已完成 → <strong>本周已暂停</strong>（新增灰色 <code>status-paused</code>）→ 本周任务已完成（5/5）→ 今日已打卡 → 待今日打卡</li>
+                      <li>"本周已暂停"触发条件：<code>m.participated && !m.finished && !m.weekParticipated && weekCount < CHECKINS_PER_TASK</code>，与排序/汇总表 ⏸徽章的 weekPaused 定义保持完全一致</li>
+                      <li>边界：本周暂停 + 本周已满 5/5 → 仍显示"本周任务已完成"；本周暂停 + 已收官 → 仍显示"已完成"</li>
                     </ul>
                   </li>
                 </ul>
