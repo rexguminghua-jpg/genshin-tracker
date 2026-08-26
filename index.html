@@ -983,16 +983,6 @@
     .summary-table tr.row-attention:hover { background: rgba(212, 168, 73, 0.09); }
     .summary-table tr.row-done { opacity: 0.5; }
     .summary-table tr.row-done:hover { opacity: 0.7; }
-    .acct-paused-badge {
-      display: inline-flex; align-items: center; gap: 3px;
-      margin-left: 6px;
-      padding: 1px 7px;
-      border-radius: 999px;
-      font-size: 10px; font-weight: 700;
-      background: var(--gray-soft);
-      color: var(--gray);
-      vertical-align: middle;
-    }
     /* v1.9.16：已垫抽数（卡池累计）颜色标识 */
     .pity-green { color: var(--green); font-weight: 700; }
     .pity-blue { color: var(--blue); font-weight: 700; }
@@ -1048,9 +1038,26 @@
       transition: all .15s; white-space: nowrap;
     }
     .jump-btn:hover { background: var(--gold); color: #fff; }
-    .acct-cell { display: flex; align-items: center; gap: 8px; }
-    .acct-cell .avatar { width: 28px; height: 28px; font-size: 12px; border-radius: 8px; }
-    .acct-cell-name { font-weight: 600; }
+    .acct-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .acct-cell .avatar { width: 28px; height: 28px; font-size: 12px; border-radius: 8px; flex-shrink: 0; }
+    .acct-cell-text { min-width: 0; flex: 1; }
+    .acct-cell-name {
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .acct-cell-uid { font-size: 11px; color: var(--text-faint); }
+    /* v1.9.17：徽章在汇总表里独立成块，永远不被裁切 */
+    .acct-paused-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 10px; font-weight: 700;
+      background: var(--gray-soft);
+      color: var(--gray);
+      vertical-align: middle;
+    }
 
     /* ========== 版本徽章 ========== */
     .version-badge {
@@ -1455,7 +1462,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.16</span>
+        <span class="version-badge" id="versionBadge">v1.9.17</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2479,16 +2486,16 @@
               <table class="summary-table">
                 <thead>
                   <tr>
-                    <th style="width:40px;text-align:center">入卡池</th>
-                    <th style="width:110px;text-align:center">已垫抽数</th>
-                    <th style="width:210px">账号</th>
-                    <th>砺行修远(累计)</th>
-                    <th>本周打卡</th>
-                    <th>今日打卡</th>
-                    <th>剩余历练点</th>
-                    <th>日常活动</th>
+                    <th style="width:48px;text-align:center">入卡池</th>
+                    <th style="width:100px;text-align:center">已垫抽数</th>
+                    <th style="width:240px">账号</th>
+                    <th style="width:120px">砺行修远(累计)</th>
+                    <th style="width:104px">本周打卡</th>
+                    <th style="width:80px">今日打卡</th>
+                    <th style="width:120px">剩余历练点</th>
+                    <th style="width:92px">日常活动</th>
                     <th>拓展模块</th>
-                    <th>操作</th>
+                    <th style="width:80px">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2569,12 +2576,13 @@
         <tr class="${rowCls}">
           <td style="text-align:center;font-size:18px">${m.focusTraining ? '⭐' : ''}</td>
           <td style="text-align:center">${pityTextHtml(m.pityCount) || '<span style="color:var(--text-faint)">—</span>'}</td>
-          <td style="max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          <td>
             <div class="acct-cell">
               <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
-              <div>
-                <div class="acct-cell-name">${escapeHtml(acc.name)}${pausedBadge}</div>
-                <div style="font-size:11px;color:var(--text-faint)">${acc.uid ? 'UID ' + escapeHtml(acc.uid) : escapeHtml(acc.server)}</div>
+              <div class="acct-cell-text">
+                <div class="acct-cell-name" title="${escapeHtml(acc.name)}">${escapeHtml(acc.name)}</div>
+                <div class="acct-cell-uid">${acc.uid ? 'UID ' + escapeHtml(acc.uid) : escapeHtml(acc.server)}</div>
+                ${pausedBadge ? `<div style="margin-top:3px">${pausedBadge}</div>` : ''}
               </div>
             </div>
           </td>
