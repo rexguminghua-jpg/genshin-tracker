@@ -1604,10 +1604,11 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.0</span>
+        <span class="version-badge" id="versionBadge">v2.0.1</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
-        <button class="tab-chip" data-nav="summary"><span class="tab-icon">📊</span><span>汇总</span></button>
+        <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
+        <button class="tab-chip" data-nav="detail"><span class="tab-icon">📋</span><span>进度明细</span></button>
         <button class="tab-chip" data-nav="accounts"><span class="tab-icon">🎮</span><span>账号</span></button>
       </nav>
       <div class="topbar-acct-actions" id="topbarAcctActions" style="display:none">
@@ -1640,7 +1641,8 @@
   <div class="mobile-drawer" id="mobileDrawer">
     <div class="drawer-section">
       <div class="drawer-section-title">主导航</div>
-      <button class="drawer-item" data-nav="summary"><span>📊</span><span>汇总</span></button>
+      <button class="drawer-item" data-nav="overview"><span>📊</span><span>概览</span></button>
+      <button class="drawer-item" data-nav="detail"><span>📋</span><span>进度明细</span></button>
       <button class="drawer-item" data-nav="accounts"><span>🎮</span><span>账号</span></button>
     </div>
     <div class="drawer-section" id="drawerAcctActions">
@@ -1687,7 +1689,7 @@
     let state = {
       accounts: [],
       activityEndDate: null,  // 'YYYY-MM-DD' 全局活动结束日期
-      tab: 'summary',      // 'summary' | 'accounts'
+      tab: 'overview',     // 'overview' | 'detail' | 'accounts'
       view: 'list',        // 'list' | 'detail' (accounts tab 内部)
       activeId: null,
       detailTab: 'lixy',   // 'lixy' | 'daily' (详情页内部)
@@ -2520,8 +2522,10 @@
       // 关闭更多下拉（切 tab 时）
       closeMoreDropdown();
 
-      if (state.tab === 'summary') {
-        renderSummaryPage();
+      if (state.tab === 'overview') {
+        renderOverview();
+      } else if (state.tab === 'detail') {
+        renderDetailTable();
       } else {
         if (state.view === 'list') renderList();
         else if (state.view === 'detail') renderDetail();
@@ -2610,8 +2614,7 @@
       return list.slice().sort(cmp);
     }
 
-    function renderSummaryPage() {
-      const list = sortSummaryList(state.accounts);
+    function renderOverview() {
       const s = computeSummary();
 
       // v1.9.19：砺行修远 4 档分布条单项
@@ -2648,7 +2651,7 @@
           ${weeksHtml}
         </div>
 
-        ${list.length === 0 ? `
+        ${state.accounts.length === 0 ? `
           <div class="card empty-state">
             <div class="empty-state-icon">📋</div>
             <div class="empty-state-title">还没有账号</div>
@@ -2751,30 +2754,6 @@
             </div>
           </div>
 
-          <div class="card" style="padding:18px 22px;margin-top:18px;">
-            <div style="font-size:16px;font-weight:700;margin-bottom:14px;">📋 账号进度明细</div>
-            <div class="summary-table-wrap">
-              <table class="summary-table">
-                <thead>
-                  <tr>
-                    <th style="width:48px;text-align:center">入卡池</th>
-                    <th style="width:100px;text-align:center">已垫抽数</th>
-                    <th style="width:240px">账号</th>
-                    <th style="width:120px">砺行修远(累计)</th>
-                    <th style="width:104px">本周打卡</th>
-                    <th style="width:80px">今日打卡</th>
-                    <th style="width:120px">剩余历练点</th>
-                    <th style="width:100px">日常活动</th>
-                    <th style="width:230px">拓展模块</th>
-                    <th style="width:80px">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${list.map(renderSummaryRow).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
         `}
       `;
 
@@ -2784,6 +2763,62 @@
         render();
         if (e.target.value) showToast('活动结束日期已更新');
       });
+    }
+
+    /* ---- 进度明细页（原汇总页的账号明细表） ---- */
+    function renderDetailTable() {
+      const list = sortSummaryList(state.accounts);
+
+      if (list.length === 0) {
+        root.innerHTML = `
+          <div class="page-head">
+            <div>
+              <div class="page-title">📋 进度明细</div>
+              <div class="page-sub">各账号任务进度逐行明细</div>
+            </div>
+          </div>
+          <div class="card empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">还没有账号</div>
+            <div style="margin-top:8px;margin-bottom:18px;">先去「账号」标签页创建账号，进度明细会自动出现在这里</div>
+            <button class="btn btn-primary" onclick="switchTab('accounts')">前往账号页 →</button>
+          </div>`;
+        return;
+      }
+
+      root.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="page-title">📋 进度明细</div>
+            <div class="page-sub">各账号任务进度逐行明细 · 点击未完成账号可跳转跟进</div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:18px 22px;margin-top:18px;">
+          <div style="font-size:16px;font-weight:700;margin-bottom:14px;">📋 账号进度明细</div>
+          <div class="summary-table-wrap">
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th style="width:48px;text-align:center">入卡池</th>
+                  <th style="width:100px;text-align:center">已垫抽数</th>
+                  <th style="width:240px">账号</th>
+                  <th style="width:120px">砺行修远(累计)</th>
+                  <th style="width:104px">本周打卡</th>
+                  <th style="width:80px">今日打卡</th>
+                  <th style="width:120px">剩余历练点</th>
+                  <th style="width:100px">日常活动</th>
+                  <th style="width:230px">拓展模块</th>
+                  <th style="width:80px">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${list.map(renderSummaryRow).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
 
       root.querySelectorAll('[data-jump-id]').forEach(b => {
         b.addEventListener('click', () => enterDetailFromSummary(b.dataset.jumpId));
