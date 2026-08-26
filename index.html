@@ -117,6 +117,83 @@
     }
     .icon-btn:hover { background: var(--card-strong); color: var(--text); transform: translateY(-1px); }
 
+    /* ========== 顶栏 Tab 胶囊 ========== */
+    .topbar-tabs { display: flex; gap: 4px; padding: 4px; background: var(--gray-soft); border-radius: 12px; margin-left: 4px; }
+    .tab-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 9px;
+      font-size: 13px; font-weight: 600;
+      color: var(--text-muted);
+      transition: all .2s;
+    }
+    .tab-chip:hover { color: var(--text); }
+    .tab-chip.active {
+      background: var(--card-strong); color: var(--gold-deep);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .tab-chip .tab-icon { font-size: 14px; }
+
+    /* ========== 顶栏 账号操作 chip ========== */
+    .topbar-acct-actions { display: flex; gap: 8px; align-items: center; margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--border); }
+    .chip-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 7px 14px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      background: rgba(255,255,255,0.65);
+      color: var(--text);
+      border: 1px solid var(--border);
+      transition: all .18s;
+      cursor: pointer;
+    }
+    .chip-btn:hover { background: var(--card-strong); transform: translateY(-1px); }
+    .chip-btn.chip-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+      color: #fff; border-color: transparent;
+      box-shadow: 0 3px 8px rgba(212,168,73,0.25);
+    }
+    .chip-btn.chip-primary:hover { filter: brightness(1.05); }
+
+    /* ========== 顶栏 ···更多 下拉 ========== */
+    .topbar-more { position: relative; }
+    .more-btn {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 18px; font-weight: 800;
+      letter-spacing: 1px;
+      transition: all .18s;
+      cursor: pointer;
+    }
+    .more-btn:hover, .more-btn.open { background: var(--card-strong); color: var(--text); }
+    .more-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      min-width: 180px;
+      background: var(--card-strong);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      padding: 6px;
+      display: none;
+      z-index: 40;
+      animation: fadeIn .15s ease;
+    }
+    .more-dropdown.open { display: block; }
+    .more-item {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      color: var(--text);
+      text-align: left;
+      transition: background .15s;
+      cursor: pointer;
+    }
+    .more-item:hover { background: var(--gray-soft); }
+    .more-divider { height: 1px; background: var(--border); margin: 4px 8px; }
+
     /* ========== 卡片通用 ========== */
     .card {
       background: var(--card);
@@ -1162,63 +1239,12 @@
       .mini-bar { width: 36px; }
     }
 
-    /* ========== 侧边栏布局 ========== */
+    /* ========== 侧边栏布局（v2.0.0：顶栏统一导航，桌面无侧栏；保留抽屉仅供移动端） ========== */
     .app-layout {
-      display: grid;
-      grid-template-columns: 200px 1fr;
-      gap: 20px;
+      display: block;
+      max-width: 1400px;
       margin: 0 auto;
       padding: 24px 20px 40px;
-      align-items: start;
-    }
-    .sidebar {
-      position: sticky;
-      top: 84px;
-      background: var(--card);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 10px;
-      box-shadow: var(--shadow-sm);
-    }
-    .sidebar-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-faint);
-      letter-spacing: 1px;
-      padding: 0 8px 8px;
-      text-transform: uppercase;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      transition: all .15s;
-      cursor: pointer;
-      width: 100%;
-      text-align: left;
-    }
-    .nav-item:hover { background: rgba(255,255,255,0.7); color: var(--text); }
-    .nav-item.active {
-      background: linear-gradient(135deg, rgba(212,168,73,0.15), rgba(60,108,176,0.10));
-      color: var(--gold-deep);
-      box-shadow: 0 2px 6px rgba(212,168,73,0.10);
-    }
-    .nav-item .icon { font-size: 16px; }
-    .nav-badge {
-      margin-left: auto;
-      background: var(--red);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 999px;
     }
     .main-content { min-width: 0; }
 
@@ -1242,29 +1268,58 @@
       z-index: 90;
       animation: fadeIn .15s ease;
     }
+    .mobile-drawer {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 280px;
+      z-index: 100;
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      overflow-y: auto;
+      padding: 70px 0 24px;
+    }
+    .mobile-drawer.open { transform: translateX(0); }
+    .drawer-section { padding: 8px 10px; }
+    .drawer-section + .drawer-section { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 14px; }
+    .drawer-section-title {
+      font-size: 11px; font-weight: 700;
+      color: var(--text-faint); letter-spacing: 1px;
+      padding: 4px 10px 6px;
+      text-transform: uppercase;
+    }
+    .drawer-item {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 600;
+      color: var(--text-muted);
+      text-align: left;
+      transition: all .15s;
+      cursor: pointer;
+    }
+    .drawer-item:hover { background: rgba(255,255,255,0.7); color: var(--text); }
+    .drawer-item.active {
+      background: linear-gradient(135deg, rgba(212,168,73,0.15), rgba(60,108,176,0.10));
+      color: var(--gold-deep);
+    }
+    .drawer-item span:first-child { font-size: 16px; }
+
     @media (max-width: 960px) {
-      .app-layout {
-        grid-template-columns: 1fr;
-        padding: 16px 12px 30px;
-        gap: 0;
-      }
-      .sidebar {
-        position: fixed;
-        top: 0; left: 0; bottom: 0;
-        width: 240px;
-        z-index: 100;
-        border-radius: 0;
-        border: none;
-        border-right: 1px solid var(--border);
-        transform: translateX(-100%);
-        transition: transform .25s ease;
-        box-shadow: var(--shadow-lg);
-        padding-top: 70px;
-      }
-      .sidebar.open { transform: translateX(0); }
-      .sidebar-overlay.show { display: block; }
+      .app-layout { padding: 16px 12px 30px; }
       .hamburger-btn { display: grid; }
-      .sidebar-title { display: none; }
+      .topbar-tabs { display: none; }
+      .topbar-acct-actions { display: none !important; }
+      .topbar-spacer { display: none; }
+    }
+    @media (max-width: 600px) {
+      .more-btn { width: 36px; height: 36px; font-size: 16px; }
+      .chip-btn { padding: 6px 10px; font-size: 12px; }
     }
 
     /* ========== 详情页顶部 Tab ========== */
@@ -1549,34 +1604,60 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.21</span>
+        <span class="version-badge" id="versionBadge">v2.0.0</span>
+      </div>
+      <nav class="topbar-tabs" id="topbarTabs">
+        <button class="tab-chip" data-nav="summary"><span class="tab-icon">📊</span><span>汇总</span></button>
+        <button class="tab-chip" data-nav="accounts"><span class="tab-icon">🎮</span><span>账号</span></button>
+      </nav>
+      <div class="topbar-acct-actions" id="topbarAcctActions" style="display:none">
+        <button class="chip-btn chip-primary" id="btnAddAccountTop">+ 新建账号</button>
+        <button class="chip-btn" id="btnBatchImportTop" title="从 CSV 文件批量导入账号">📥 批量导入</button>
+        <button class="chip-btn" id="btnDownloadTplTop" title="下载 CSV 导入模板">📋 下载模板</button>
       </div>
       <div class="topbar-spacer"></div>
-      <div class="topbar-actions">
-        <button class="icon-btn" id="btnSync" title="云同步设置">☁️</button>
-        <button class="icon-btn" id="btnChangelog" title="更新日志">📋</button>
-        <button class="icon-btn" id="btnHelp" title="使用说明">?</button>
-        <button class="icon-btn" id="btnExport" title="导出数据">⬇</button>
-        <button class="icon-btn" id="btnImport" title="导入数据">⬆</button>
-        <button class="icon-btn" id="btnDataCheck" title="数据自检 · 总任务进度">🔧</button>
+      <div class="topbar-more">
+        <button class="more-btn" id="btnMore" title="更多">···</button>
+        <div class="more-dropdown" id="moreDropdown">
+          <button class="more-item" data-more="sync">☁️ 云同步</button>
+          <button class="more-item" data-more="changelog">📋 更新日志</button>
+          <button class="more-item" data-more="help">❓ 使用说明</button>
+          <div class="more-divider"></div>
+          <button class="more-item" data-more="export">⬇ 导出数据</button>
+          <button class="more-item" data-more="import">⬆ 导入数据</button>
+          <button class="more-item" data-more="dataCheck">🔧 数据自检</button>
+        </div>
       </div>
     </div>
   </header>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <div class="app-layout">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-title">主导航</div>
-      <button class="nav-item" data-nav="summary">
-        <span class="icon">📊</span>
-        <span>汇总</span>
-      </button>
-      <button class="nav-item" data-nav="accounts">
-        <span class="icon">🎮</span>
-        <span>账号</span>
-      </button>
-    </aside>
     <main class="main-content" id="root"></main>
+  </div>
+
+  <!-- 移动端抽屉菜单 -->
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-section">
+      <div class="drawer-section-title">主导航</div>
+      <button class="drawer-item" data-nav="summary"><span>📊</span><span>汇总</span></button>
+      <button class="drawer-item" data-nav="accounts"><span>🎮</span><span>账号</span></button>
+    </div>
+    <div class="drawer-section" id="drawerAcctActions">
+      <div class="drawer-section-title">账号操作</div>
+      <button class="drawer-item" id="btnAddAccountDrawer"><span>➕</span><span>新建账号</span></button>
+      <button class="drawer-item" id="btnBatchImportDrawer"><span>📥</span><span>批量导入</span></button>
+      <button class="drawer-item" id="btnDownloadTplDrawer"><span>📋</span><span>下载模板</span></button>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">工具</div>
+      <button class="drawer-item" data-more="sync"><span>☁️</span><span>云同步</span></button>
+      <button class="drawer-item" data-more="changelog"><span>📋</span><span>更新日志</span></button>
+      <button class="drawer-item" data-more="help"><span>❓</span><span>使用说明</span></button>
+      <button class="drawer-item" data-more="export"><span>⬇</span><span>导出数据</span></button>
+      <button class="drawer-item" data-more="import"><span>⬆</span><span>导入数据</span></button>
+      <button class="drawer-item" data-more="dataCheck"><span>🔧</span><span>数据自检</span></button>
+    </div>
   </div>
 
   <script>
@@ -2419,16 +2500,25 @@
     const root = document.getElementById('root');
 
     function render() {
-      // 更新侧边栏导航高亮
+      // 顶栏 tab active 高亮
       document.querySelectorAll('[data-nav]').forEach(el => {
         el.classList.toggle('active', el.dataset.nav === state.tab);
       });
-      // 移动端：切换 tab 时关闭抽屉
-      if (state.tab) state.mobileSidebarOpen = false;
-      const sidebar = document.getElementById('sidebar');
+      // 移动端抽屉 active
+      const drawer = document.getElementById('mobileDrawer');
+      if (drawer) drawer.classList.toggle('open', !!state.mobileSidebarOpen);
       const overlay = document.getElementById('sidebarOverlay');
-      if (sidebar) sidebar.classList.toggle('open', state.mobileSidebarOpen);
-      if (overlay) overlay.classList.toggle('show', state.mobileSidebarOpen);
+      if (overlay) overlay.classList.toggle('show', !!state.mobileSidebarOpen);
+      // 账号操作 chip 仅在「账号 tab + 列表页」时显示（详情页隐藏，避免与返回按钮重复）
+      const acctActions = document.getElementById('topbarAcctActions');
+      if (acctActions) {
+        const show = state.tab === 'accounts' && state.view === 'list';
+        acctActions.style.display = show ? 'flex' : 'none';
+      }
+      const drawerAcct = document.getElementById('drawerAcctActions');
+      if (drawerAcct) drawerAcct.style.display = (state.tab === 'accounts' && state.view === 'list') ? 'block' : 'none';
+      // 关闭更多下拉（切 tab 时）
+      closeMoreDropdown();
 
       if (state.tab === 'summary') {
         renderSummaryPage();
@@ -2437,6 +2527,24 @@
         else if (state.view === 'detail') renderDetail();
       }
       renderModal();
+    }
+
+    function openMoreDropdown() {
+      const dd = document.getElementById('moreDropdown');
+      const btn = document.getElementById('btnMore');
+      if (dd) dd.classList.add('open');
+      if (btn) btn.classList.add('open');
+    }
+    function closeMoreDropdown() {
+      const dd = document.getElementById('moreDropdown');
+      const btn = document.getElementById('btnMore');
+      if (dd) dd.classList.remove('open');
+      if (btn) btn.classList.remove('open');
+    }
+    function toggleMoreDropdown() {
+      const dd = document.getElementById('moreDropdown');
+      if (dd?.classList.contains('open')) closeMoreDropdown();
+      else openMoreDropdown();
     }
 
     function switchTab(tab) {
@@ -2787,18 +2895,13 @@
             <div class="page-title">我的账号</div>
             <div class="page-sub">共 ${list.length} 个账号 · 数据保存在浏览器本地</div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-primary" id="btnAddAccount">+ 新建账号</button>
-            <button class="btn" id="btnBatchImport" title="从 CSV 文件批量导入账号">📥 批量导入</button>
-            <button class="btn" id="btnDownloadTpl" title="下载 CSV 导入模板">📋 下载模板</button>
-          </div>
         </div>
 
         ${list.length === 0 ? `
           <div class="card empty-state">
             <div class="empty-state-icon">📋</div>
             <div class="empty-state-title">还没有账号</div>
-            <div style="margin-top:8px;margin-bottom:18px;">点击右上角新增按钮，记录你的第一个原神账号任务进度</div>
+            <div style="margin-top:8px;margin-bottom:18px;">点击顶部导航栏「+ 新建账号」按钮，记录你的第一个原神账号任务进度</div>
             <button class="btn btn-primary" onclick="openAddAccountModal()">+ 新建账号</button>
           </div>
         ` : `
@@ -2808,9 +2911,7 @@
         `}
       `;
 
-      document.getElementById('btnAddAccount')?.addEventListener('click', openAddAccountModal);
-      document.getElementById('btnBatchImport')?.addEventListener('click', batchImportFromCsv);
-      document.getElementById('btnDownloadTpl')?.addEventListener('click', downloadCsvTemplate);
+      // 账号操作按钮已迁至顶部导航栏（事件在 init 中统一绑定）
       root.querySelectorAll('[data-acct-id]').forEach(el => {
         el.addEventListener('click', e => {
           if (e.target.closest('[data-act]')) return; // 阻止卡片内按钮冒泡
@@ -4485,22 +4586,45 @@
       updateSyncBtn();
       syncPull(); // 后台拉取，有新数据会自动 re-render
 
-      document.getElementById('btnSync').addEventListener('click', () => {
-        state.modal = 'syncSettings'; render();
-      });
-      document.getElementById('btnHelp').addEventListener('click', () => {
-        state.modal = 'help'; render();
-      });
-      document.getElementById('btnExport').addEventListener('click', exportData);
-      document.getElementById('btnImport').addEventListener('click', importDataFromFile);
-      document.getElementById('btnDataCheck').addEventListener('click', () => { state.modal = 'dataCheck'; render(); });
-      document.getElementById('btnChangelog').addEventListener('click', () => {
-        state.modal = 'changelog'; render();
-      });
-      // 侧边栏导航
+      // 顶栏 tab 切换（同时响应桌面顶栏和移动抽屉里的 data-nav）
       document.querySelectorAll('[data-nav]').forEach(el => {
-        el.addEventListener('click', () => switchTab(el.dataset.nav));
+        el.addEventListener('click', () => {
+          switchTab(el.dataset.nav);
+          state.mobileSidebarOpen = false;
+        });
       });
+      // 顶栏 ···更多 下拉
+      document.getElementById('btnMore')?.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleMoreDropdown();
+      });
+      // 下拉菜单项
+      document.querySelectorAll('[data-more]').forEach(el => {
+        el.addEventListener('click', () => {
+          const k = el.dataset.more;
+          closeMoreDropdown();
+          if (k === 'sync') { state.modal = 'syncSettings'; render(); }
+          else if (k === 'changelog') { state.modal = 'changelog'; render(); }
+          else if (k === 'help') { state.modal = 'help'; render(); }
+          else if (k === 'export') exportData();
+          else if (k === 'import') importDataFromFile();
+          else if (k === 'dataCheck') { state.modal = 'dataCheck'; render(); }
+        });
+      });
+      // 点击下拉外关闭
+      document.addEventListener('click', e => {
+        if (!e.target.closest('.topbar-more')) closeMoreDropdown();
+      });
+
+      // 顶栏账号操作 chip（桌面）
+      document.getElementById('btnAddAccountTop')?.addEventListener('click', openAddAccountModal);
+      document.getElementById('btnBatchImportTop')?.addEventListener('click', batchImportFromCsv);
+      document.getElementById('btnDownloadTplTop')?.addEventListener('click', downloadCsvTemplate);
+      // 移动端抽屉中的账号操作
+      document.getElementById('btnAddAccountDrawer')?.addEventListener('click', () => { state.mobileSidebarOpen = false; openAddAccountModal(); });
+      document.getElementById('btnBatchImportDrawer')?.addEventListener('click', () => { state.mobileSidebarOpen = false; batchImportFromCsv(); });
+      document.getElementById('btnDownloadTplDrawer')?.addEventListener('click', () => { state.mobileSidebarOpen = false; downloadCsvTemplate(); });
+
       // 移动端汉堡菜单
       document.getElementById('btnHamburger').addEventListener('click', () => {
         state.mobileSidebarOpen = !state.mobileSidebarOpen;
