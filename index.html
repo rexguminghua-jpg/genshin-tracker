@@ -993,6 +993,34 @@
       color: var(--gray);
       vertical-align: middle;
     }
+    /* v1.9.16：已垫抽数（卡池累计）颜色标识 */
+    .pity-green { color: var(--green); font-weight: 700; }
+    .pity-blue { color: var(--blue); font-weight: 700; }
+    .pity-orange { color: var(--orange); font-weight: 700; }
+    .pity-gold { color: var(--gold); font-weight: 700; }
+    .pity-text { font-size: 12px; }
+    .acct-pool-star { color: var(--gold); margin-left: 4px; font-size: 13px; }
+    .acct-pity { font-size: 12px; margin-top: 2px; }
+    .pity-field {
+      display: inline-flex; align-items: center; gap: 1px;
+      font-size: 12px;
+    }
+    .pity-field .pity-input {
+      width: 42px; padding: 3px 4px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--card-strong);
+      text-align: center; font-weight: 700; font-size: 13px;
+      color: var(--text);
+      -moz-appearance: textfield;
+    }
+    .pity-field .pity-input::-webkit-outer-spin-button,
+    .pity-field .pity-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .pity-field.pity-green .pity-input { color: var(--green); }
+    .pity-field.pity-blue .pity-input { color: var(--blue); }
+    .pity-field.pity-orange .pity-input { color: var(--orange); }
+    .pity-field.pity-gold .pity-input { color: var(--gold); }
+    .pity-field .pity-prefix,
+    .pity-field .pity-suffix { color: var(--text-muted); font-weight: 600; }
     .mini-progress { display: flex; align-items: center; gap: 6px; }
     .mini-bar {
       width: 56px; height: 5px;
@@ -1427,7 +1455,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.15</span>
+        <span class="version-badge" id="versionBadge">v1.9.16</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -1708,7 +1736,8 @@
           tasksDone: 0,               // 已完成的砺行修远任务数
           finished: false,            // 8 次任务全完成标记
           finishedAt: null,
-          remainingPoints: null       // 剩余历练点（手动输入，精确至小数点后1位）
+          remainingPoints: null,      // 剩余历练点（手动输入，精确至小数点后1位）
+          pityCount: null             // v1.9.16：5星卡池已垫抽数（0-90 整数，null=未填写）
         },
         dailyActivities: {
           participated: false,
@@ -1746,6 +1775,7 @@
     function migrateAccount(acc) {
       if (!acc.liXingXiuYuan) acc.liXingXiuYuan = {};
       if (acc.liXingXiuYuan.weekParticipated == null) acc.liXingXiuYuan.weekParticipated = true;
+      if (acc.liXingXiuYuan.pityCount == null) acc.liXingXiuYuan.pityCount = null; // v1.9.16
       if (!acc.dailyActivities) acc.dailyActivities = { participated: false, stage: 'none', deadline: null, lastChangedAt: null };
       else {
         // v1.9.13：旧版 progress 字段兼容 → 映射到新 stage
@@ -2017,6 +2047,21 @@
       if (n < 12) return { cls: 'red', color: 'var(--red)', prompt: '尽快补充', promptCls: 'red' };
       if (n < 40) return { cls: 'orange', color: 'var(--orange)', prompt: '历练点偏低', promptCls: 'orange' };
       return { cls: 'green', color: 'var(--green)', prompt: '', promptCls: '' };
+    }
+
+    // v1.9.16：已垫抽数配色（0-50 绿 / 51-70 蓝 / 71-80 橙 / 81-90 金）
+    function pityColor(n) {
+      if (n == null || isNaN(n)) return null;
+      const v = parseInt(n, 10);
+      if (v <= 50) return 'green';
+      if (v <= 70) return 'blue';
+      if (v <= 80) return 'orange';
+      return 'gold';
+    }
+    // 渲染只读展示「已垫【X】抽」（带颜色 + 提示）
+    function pityTextHtml(n) {
+      if (n == null) return '';
+      return `<span class="pity-text pity-${pityColor(n)}" title="5星卡池累计已垫抽数">已垫【${n}】抽</span>`;
     }
 
     // 计算全局汇总
@@ -2434,8 +2479,9 @@
               <table class="summary-table">
                 <thead>
                   <tr>
-                    <th style="width:32px;text-align:center">练号</th>
-                    <th>账号</th>
+                    <th style="width:40px;text-align:center">入卡池</th>
+                    <th style="width:110px;text-align:center">已垫抽数</th>
+                    <th style="width:210px">账号</th>
                     <th>砺行修远(累计)</th>
                     <th>本周打卡</th>
                     <th>今日打卡</th>
@@ -2522,7 +2568,8 @@
       return `
         <tr class="${rowCls}">
           <td style="text-align:center;font-size:18px">${m.focusTraining ? '⭐' : ''}</td>
-          <td>
+          <td style="text-align:center">${pityTextHtml(m.pityCount) || '<span style="color:var(--text-faint)">—</span>'}</td>
+          <td style="max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             <div class="acct-cell">
               <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
               <div>
@@ -2659,8 +2706,9 @@
           <div class="acct-head">
             <div class="avatar" style="background:linear-gradient(135deg, ${c1}, ${c2})">${escapeHtml(accountInitials(acc.name))}</div>
             <div class="acct-info">
-              <div class="acct-name">${escapeHtml(acc.name)}</div>
+              <div class="acct-name">${escapeHtml(acc.name)}${m.focusTraining ? ' <span class="acct-pool-star" title="入卡池">⭐</span>' : ''}</div>
               <div class="acct-uid">${acc.uid ? `UID ${escapeHtml(acc.uid)} · ` : ''}${escapeHtml(acc.server)}</div>
+              ${pityTextHtml(m.pityCount) ? `<div class="acct-pity">${pityTextHtml(m.pityCount)}</div>` : ''}
             </div>
             <button class="btn btn-sm btn-ghost" data-act="edit" data-id="${acc.id}" title="编辑">✏️</button>
             <button class="btn btn-sm btn-ghost" data-act="delete" data-id="${acc.id}" title="删除">🗑️</button>
@@ -2783,6 +2831,8 @@
       const weekRatio = Math.max(0, Math.min(1, (weekCount || 0) / CHECKINS_PER_TASK));
       const taskColor = progressHue(taskRatio);
       const weekColor = progressHue(weekRatio);
+      // v1.9.16：已垫抽数配色 class
+      const pityFieldCls = m.pityCount != null ? `pity-${pityColor(m.pityCount)}` : '';
 
       return `
         <section class="card module-card">
@@ -2820,6 +2870,17 @@
                   <input type="checkbox" data-toggle="focus" ${m.focusTraining ? 'checked' : ''}>
                   <span class="switch-slider"></span>
                 </label>
+              </div>
+              <div class="switch-row">
+                <div>
+                  <div class="switch-label">已垫抽数</div>
+                  <div class="switch-help">5星卡池累计（0-90）</div>
+                </div>
+                <div class="pity-field ${pityFieldCls}">
+                  <span class="pity-prefix">已垫【</span>
+                  <input type="number" class="pity-input" id="inpPityCount" min="0" max="90" step="1" placeholder="0" value="${m.pityCount != null ? m.pityCount : ''}">
+                  <span class="pity-suffix">】抽</span>
+                </div>
               </div>
             </div>
 
@@ -2978,6 +3039,21 @@
       pointsInput?.addEventListener('change', () => {
         updateRemainingPoints(acc.id, pointsInput.value);
         showToast('历练点已更新');
+        render();
+      });
+      // v1.9.16：已垫抽数（独立于入卡池开关）
+      const pityInput = document.getElementById('inpPityCount');
+      pityInput?.addEventListener('change', () => {
+        const raw = pityInput.value;
+        if (raw === '' || raw == null) {
+          acc.liXingXiuYuan.pityCount = null;
+        } else {
+          const n = parseInt(raw, 10);
+          if (isNaN(n)) acc.liXingXiuYuan.pityCount = null;
+          else acc.liXingXiuYuan.pityCount = Math.max(0, Math.min(90, n));
+        }
+        saveState();
+        showToast('已垫抽数已更新');
         render();
       });
       // 🔧 校准进度：按实际打卡记录重算总任务进度
