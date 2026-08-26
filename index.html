@@ -1462,7 +1462,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.17</span>
+        <span class="version-badge" id="versionBadge">v1.9.18</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2065,10 +2065,14 @@
       if (v <= 80) return 'orange';
       return 'gold';
     }
-    // 渲染只读展示「已垫【X】抽」（带颜色 + 提示）
-    function pityTextHtml(n) {
+    // 渲染只读展示「已垫【X】抽」/「【X】抽」（带颜色 + 提示）
+    // v1.9.18：short=true 时去掉"已垫"前缀，仅【X】抽（用于汇总表列）
+    function pityTextHtml(n, short = false) {
       if (n == null) return '';
-      return `<span class="pity-text pity-${pityColor(n)}" title="5星卡池累计已垫抽数">已垫【${n}】抽</span>`;
+      const cls = `pity-text pity-${pityColor(n)}`;
+      const title = '5星卡池累计已垫抽数';
+      const text = short ? `【${n}】抽` : `已垫【${n}】抽`;
+      return `<span class="${cls}" title="${title}">${text}</span>`;
     }
 
     // 计算全局汇总
@@ -2493,8 +2497,8 @@
                     <th style="width:104px">本周打卡</th>
                     <th style="width:80px">今日打卡</th>
                     <th style="width:120px">剩余历练点</th>
-                    <th style="width:92px">日常活动</th>
-                    <th>拓展模块</th>
+                    <th style="width:100px">日常活动</th>
+                    <th style="width:230px">拓展模块</th>
                     <th style="width:80px">操作</th>
                   </tr>
                 </thead>
@@ -2575,7 +2579,7 @@
       return `
         <tr class="${rowCls}">
           <td style="text-align:center;font-size:18px">${m.focusTraining ? '⭐' : ''}</td>
-          <td style="text-align:center">${pityTextHtml(m.pityCount) || '<span style="color:var(--text-faint)">—</span>'}</td>
+          <td style="text-align:center">${pityTextHtml(m.pityCount, true) || '<span style="color:var(--text-faint)">—</span>'}</td>
           <td>
             <div class="acct-cell">
               <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
