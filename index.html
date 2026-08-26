@@ -801,6 +801,89 @@
       .summary-row { grid-template-columns: 1fr; gap: 14px; }
     }
 
+    /* ===== v1.9.19 全局概览重做 ===== */
+    .ov-section-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    .ov-section-title .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .ov-muted { color: var(--text-muted); font-weight: 400; }
+
+    .overview-top { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+    .ov-ring-card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .ov-ring {
+      --pct: 0;
+      width: 132px; height: 132px; border-radius: 50%;
+      background: conic-gradient(var(--gold) calc(var(--pct) * 1%), var(--gray-soft) 0);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ov-ring-inner {
+      width: 104px; height: 104px; border-radius: 50%;
+      background: var(--card-strong);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .ov-ring-num { font-size: 26px; font-weight: 800; color: var(--gold-deep); line-height: 1; }
+    .ov-ring-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .ov-ring-cap { font-size: 12px; color: var(--text-muted); }
+
+    .kpi-grid { flex: 1; min-width: 240px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .kpi { text-align: center; padding: 12px 6px; background: var(--card-strong); border: 1px solid var(--border); border-radius: 10px; }
+    .kpi-num {
+      font-size: 20px; font-weight: 800;
+      background: linear-gradient(135deg, var(--gold-deep), var(--blue));
+      -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1.2;
+    }
+    .kpi-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    .dist-section { margin-bottom: 18px; }
+    .dist-row { display: flex; flex-direction: column; gap: 8px; }
+    .dist-item { display: flex; align-items: center; gap: 10px; }
+    .dist-label { width: 64px; font-size: 12px; color: var(--text); flex-shrink: 0; }
+    .dist-bar-track { flex: 1; height: 10px; background: var(--gray-soft); border-radius: 999px; overflow: hidden; }
+    .dist-bar-fill { height: 100%; border-radius: 999px; transition: width .25s; min-width: 2px; }
+    .dist-count { width: 28px; text-align: right; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+
+    .overview-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .ov-col { background: var(--card-strong); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+    .col-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    .col-title .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .ov-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ov-bucket { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .ov-bucket.green { background: rgba(46,154,108,0.12); color: var(--green); }
+    .ov-bucket.blue { background: rgba(58,123,213,0.12); color: var(--blue); }
+    .ov-bucket.orange { background: rgba(215,122,60,0.12); color: var(--orange); }
+    .ov-bucket.gold { background: var(--gold-soft); color: var(--gold-deep); }
+    .ov-focus-count { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+
+    .points-stats { background: var(--card-strong); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+    .pts-summary { font-size: 13px; color: var(--text); margin-bottom: 10px; }
+    .pts-color-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pt-chip { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .pt-chip.red { background: rgba(201,69,69,0.12); color: var(--red); }
+    .pt-chip.orange { background: rgba(215,122,60,0.12); color: var(--orange); }
+    .pt-chip.green { background: rgba(46,154,108,0.12); color: var(--green); }
+    .pts-alert {
+      display: flex; gap: 8px; align-items: flex-start;
+      margin-top: 6px; padding: 8px 10px; border-radius: 8px;
+      background: rgba(201,69,69,0.08); border: 1px solid rgba(201,69,69,0.25);
+    }
+    .pts-alert-icon { color: var(--red); font-size: 14px; line-height: 1.4; }
+    .pts-alert > div { font-size: 12px; color: var(--red); line-height: 1.5; }
+    .pts-alert-item { font-weight: 700; margin-right: 10px; white-space: nowrap; }
+
+    .focus-chips { margin-bottom: 4px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .focus-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px;
+      background: var(--gold-soft); color: var(--gold-deep);
+      font-size: 12px; font-weight: 600;
+    }
+
+    @media (max-width: 760px) {
+      .overview-top { flex-direction: column; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); min-width: 0; }
+      .overview-cols { grid-template-columns: 1fr; }
+    }
+
     /* ========== 砺行修远：当月日历 + 右侧操作（左右布局） ========== */
     .lixy-body {
       display: flex;
@@ -1462,7 +1545,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v1.9.18</span>
+        <span class="version-badge" id="versionBadge">v1.9.19</span>
       </div>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
@@ -2081,6 +2164,14 @@
       let lxyParticipated = 0, lxyFinished = 0, lxyTodayChecked = 0, lxyWeekPaused = 0;
       let dailyPending = 0, dailyInProgress = 0, dailyCompleted = 0, dailyNotPart = 0;
       let spiralPart = 0, theatrePart = 0, stygianPart = 0;
+      let sumTasksDone = 0;
+      // 历练点统计（按颜色分类）
+      let ptsTotal = 0, ptsCount = 0, ptsRed = 0, ptsOrange = 0, ptsGreen = 0;
+      const ptsLowList = [];
+      // 卡池 pity 分布（0-50 / 51-70 / 71-80 / 81-90）
+      const pityBuckets = { g0_50: 0, g51_70: 0, g71_80: 0, g81_90: 0 };
+      let focusCount = 0;
+      const focusAccounts = [];
 
       state.accounts.forEach(acc => {
         const m = acc.liXingXiuYuan;
@@ -2090,6 +2181,7 @@
           if (m.finished) lxyFinished++;
           if (isTodayChecked(acc)) lxyTodayChecked++;
           if (!m.weekParticipated && !m.finished) lxyWeekPaused++;
+          sumTasksDone += (m.tasksDone || 0);
         }
         if (!d.participated || d.stage === 'none') {
           dailyNotPart++;
@@ -2103,11 +2195,43 @@
         if (acc.spiralAbyss?.participated) spiralPart++;
         if (acc.imaginationTheatre?.participated) theatrePart++;
         if (acc.stygianOnslaught?.participated) stygianPart++;
+        // 历练点：按颜色分类统计，记录需补充账号
+        if (m.remainingPoints != null && !isNaN(m.remainingPoints)) {
+          const v = parseFloat(m.remainingPoints);
+          ptsTotal += v; ptsCount++;
+          const ps = getPointsStyle(m.remainingPoints);
+          if (ps) {
+            if (ps.cls === 'red') { ptsRed++; ptsLowList.push(`${acc.name} (${v})`); }
+            else if (ps.cls === 'orange') ptsOrange++;
+            else ptsGreen++;
+          }
+        }
+        // 卡池 pity 分桶
+        if (m.pityCount != null && !isNaN(m.pityCount)) {
+          const c = pityColor(m.pityCount);
+          if (c === 'green') pityBuckets.g0_50++;
+          else if (c === 'blue') pityBuckets.g51_70++;
+          else if (c === 'orange') pityBuckets.g71_80++;
+          else if (c === 'gold') pityBuckets.g81_90++;
+        }
+        // 入卡池账号
+        if (m.focusTraining) {
+          focusCount++;
+          focusAccounts.push({ name: acc.name, pity: m.pityCount });
+        }
       });
 
+      const lxyNotPart = Math.max(0, total - lxyParticipated);
+      const lxyNormal = Math.max(0, lxyParticipated - lxyFinished - lxyWeekPaused);
+      const lxyOverallPct = total ? Math.round(sumTasksDone / (total * TASK_TOTAL_REQUIRED) * 100) : 0;
+      const ptsAvg = ptsCount ? (ptsTotal / ptsCount).toFixed(1) : null;
+
       return { total, lxyParticipated, lxyFinished, lxyTodayChecked, lxyWeekPaused,
+               lxyNormal, lxyNotPart, sumTasksDone, lxyOverallPct,
                dailyPending, dailyInProgress, dailyCompleted, dailyNotPart,
-               spiralPart, theatrePart, stygianPart };
+               spiralPart, theatrePart, stygianPart,
+               ptsTotal, ptsCount, ptsRed, ptsOrange, ptsGreen, ptsLowList, ptsAvg,
+               pityBuckets, focusCount, focusAccounts };
     }
 
     // 重置本周打卡
@@ -2377,9 +2501,17 @@
     function renderSummaryPage() {
       const list = sortSummaryList(state.accounts);
       const s = computeSummary();
-      const lxyPct = s.total ? (s.lxyParticipated / s.total * 100) : 0;
-      const lxyFinPct = s.total ? (s.lxyFinished / s.total * 100) : 0;
-      const todayPct = s.lxyParticipated ? (s.lxyTodayChecked / s.lxyParticipated * 100) : 0;
+
+      // v1.9.19：砺行修远 4 档分布条单项
+      const distItem = (label, count, total, color, muted) => {
+        const pct = total ? (count / total * 100) : 0;
+        return `
+          <div class="dist-item">
+            <div class="dist-label">${label}</div>
+            <div class="dist-bar-track"><div class="dist-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+            <div class="dist-count ${muted ? 'ov-muted' : ''}">${count}</div>
+          </div>`;
+      };
 
       const rw = remainingWeeks();
       const weeksHtml = rw == null
@@ -2417,71 +2549,88 @@
               <span class="icon">📊</span>
               <span class="title">全局概览</span>
             </div>
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="summary-num">${s.total}</div>
-                <div class="summary-label">账号总数</div>
+            <div class="overview-top">
+              <div class="ov-ring-card">
+                <div class="ov-ring" style="--pct:${s.lxyOverallPct}">
+                  <div class="ov-ring-inner">
+                    <div class="ov-ring-num">${s.lxyOverallPct}%</div>
+                    <div class="ov-ring-sub">砺行修远整体进度</div>
+                  </div>
+                </div>
+                <div class="ov-ring-cap">累计 ${s.sumTasksDone}/${s.total * TASK_TOTAL_REQUIRED} 任务</div>
               </div>
-              <div class="summary-item">
-                <div class="summary-num">${s.lxyParticipated}/${s.total}</div>
-                <div class="summary-label">砺行修远参与</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-num">${s.lxyFinished}/${s.total}</div>
-                <div class="summary-label">砺行修远收官</div>
-              </div>
-              <div class="summary-item">
-                <div class="summary-num">${s.lxyTodayChecked}/${s.lxyParticipated}</div>
-                <div class="summary-label">今日已打卡</div>
+              <div class="kpi-grid">
+                <div class="kpi"><div class="kpi-num">${s.total}</div><div class="kpi-label">账号总数</div></div>
+                <div class="kpi"><div class="kpi-num">${s.lxyParticipated}/${s.total}</div><div class="kpi-label">砺行参与</div></div>
+                <div class="kpi"><div class="kpi-num">${s.lxyFinished}/${s.total}</div><div class="kpi-label">砺行收官</div></div>
+                <div class="kpi"><div class="kpi-num">${s.lxyTodayChecked}/${s.lxyParticipated}</div><div class="kpi-label">今日打卡</div></div>
               </div>
             </div>
-            <div class="summary-row">
-              <div>
-                <div class="summary-section-title">
-                  <span class="dot" style="background:var(--gold)"></span>砺行修远
-                </div>
-                <div class="summary-bar-wrap">
-                  <div class="summary-bar">
-                    <div class="summary-bar-fill" style="width:${lxyPct}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div>
-                  </div>
-                  <span class="summary-bar-label">参与 ${s.lxyParticipated}/${s.total}</span>
-                </div>
-                <div class="summary-bar-wrap">
-                  <div class="summary-bar">
-                    <div class="summary-bar-fill" style="width:${lxyFinPct}%;background:linear-gradient(90deg,var(--gold),var(--gold-deep))"></div>
-                  </div>
-                  <span class="summary-bar-label">收官 ${s.lxyFinished}/${s.total}</span>
-                </div>
-                <div class="summary-bar-wrap">
-                  <div class="summary-bar">
-                    <div class="summary-bar-fill" style="width:${todayPct}%;background:var(--blue)"></div>
-                  </div>
-                  <span class="summary-bar-label">今日打卡 ${s.lxyTodayChecked}/${s.lxyParticipated}</span>
-                </div>
+
+            <div class="dist-section">
+              <div class="ov-section-title"><span class="dot" style="background:var(--gold)"></span>砺行修远账号分布 <span class="ov-muted">(共 ${s.total} 个)</span></div>
+              <div class="dist-row">
+                ${distItem('参与', s.lxyNormal, s.total, 'var(--gold)')}
+                ${distItem('收官', s.lxyFinished, s.total, 'var(--green)')}
+                ${distItem('本周暂停', s.lxyWeekPaused, s.total, 'var(--gray)')}
+                ${distItem('不参与', s.lxyNotPart, s.total, 'var(--gray-soft)', true)}
               </div>
-              <div>
-                <div class="summary-section-title">
-                  <span class="dot" style="background:var(--blue)"></span>日常活动
-                </div>
-                <div class="daily-dist">
+            </div>
+
+            <div class="overview-cols">
+              <div class="ov-col">
+                <div class="col-title"><span class="dot" style="background:var(--blue)"></span>🎯 日常活动</div>
+                <div class="ov-pills">
                   <span class="status-pill status-pending">待接取 ${s.dailyPending}</span>
                   <span class="status-pill status-progress">进行中 ${s.dailyInProgress}</span>
                   <span class="status-pill status-done">已完成 ${s.dailyCompleted}</span>
                   ${s.dailyNotPart ? `<span class="status-pill status-skip">暂无活动 ${s.dailyNotPart}</span>` : ''}
                 </div>
               </div>
-            </div>
-            <div style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)">
-              <div class="summary-section-title" style="margin-bottom:8px">
-                <span class="dot" style="background:var(--teal)"></span>挑战模块
+              <div class="ov-col">
+                <div class="col-title"><span class="dot" style="background:var(--teal)"></span>🏆 挑战模块</div>
+                <div class="ov-pills">
+                  <span class="status-pill status-progress">深境螺旋 ${s.spiralPart}/${s.total}</span>
+                  <span class="status-pill status-progress" style="background:rgba(122,92,192,0.12);color:#7a5cc0">幻想真境 ${s.theatrePart}/${s.total}</span>
+                  <span class="status-pill status-progress" style="background:rgba(215,122,60,0.12);color:var(--orange)">幽境危战 ${s.stygianPart}/${s.total}</span>
+                </div>
               </div>
-              <div class="daily-dist">
-                <span class="status-pill status-progress">深境螺旋 ${s.spiralPart}/${s.total}</span>
-                <span class="status-pill status-progress" style="background:rgba(122,92,192,0.12);color:#7a5cc0">幻想真境剧诗 ${s.theatrePart}/${s.total}</span>
-                <span class="status-pill status-progress" style="background:rgba(215,122,60,0.12);color:var(--orange)">幽境危战 ${s.stygianPart}/${s.total}</span>
-                ${s.lxyWeekPaused ? `<span class="status-pill status-skip">本周暂停 ${s.lxyWeekPaused}</span>` : ''}
+              <div class="ov-col">
+                <div class="col-title"><span class="dot" style="background:var(--gold)"></span>💎 卡池分布</div>
+                <div class="ov-pills">
+                  <span class="ov-bucket green">0-50抽 ${s.pityBuckets.g0_50}</span>
+                  <span class="ov-bucket blue">51-70抽 ${s.pityBuckets.g51_70}</span>
+                  <span class="ov-bucket orange">71-80抽 ${s.pityBuckets.g71_80}</span>
+                  <span class="ov-bucket gold">81-90抽 ${s.pityBuckets.g81_90}</span>
+                </div>
+                <div class="ov-focus-count">⭐ 入卡池 ${s.focusCount}/${s.total}</div>
               </div>
             </div>
+
+            <div class="points-stats">
+              <div class="ov-section-title"><span class="dot" style="background:var(--gold-deep)"></span>💎 历练点统计</div>
+              <div class="pts-summary">总计 <b>${s.ptsCount ? s.ptsTotal.toFixed(1) : '—'}</b> · 平均 <b>${s.ptsAvg ?? '—'}</b> · 已填报 ${s.ptsCount}/${s.total}</div>
+              <div class="pts-color-row">
+                <span class="pt-chip red">需补充 ${s.ptsRed}</span>
+                <span class="pt-chip orange">偏低 ${s.ptsOrange}</span>
+                <span class="pt-chip green">充足 ${s.ptsGreen}</span>
+              </div>
+              ${s.ptsLowList.length ? `
+                <div class="pts-alert">
+                  <span class="pts-alert-icon">⚠</span>
+                  <div>尽快补充历练点：${s.ptsLowList.map(n => `<span class="pts-alert-item">${escapeHtml(n)}</span>`).join('')}</div>
+                </div>
+              ` : ''}
+            </div>
+
+            ${s.focusAccounts.length ? `
+              <div class="focus-chips">
+                <div class="ov-section-title"><span class="dot" style="background:var(--gold)"></span>⭐ 入卡池账号 (${s.focusCount})</div>
+                <div class="chip-row">
+                  ${s.focusAccounts.map(f => `<span class="focus-chip">${escapeHtml(f.name)}${f.pity != null ? ` ${pityTextHtml(f.pity, true)}` : ''}</span>`).join('')}
+                </div>
+              </div>
+            ` : ''}
           </div>
 
           <div class="card" style="padding:18px 22px;margin-top:18px;">
