@@ -217,6 +217,15 @@
     .page-sub {
       color: var(--text-muted); font-size: 13px; margin-top: 4px;
     }
+    /* 页内姊妹页快捷切换：仅窄屏显示（顶栏 tab 在 <=960px 隐藏时作为兜底） */
+    .sister-switch { display: none; gap: 6px; }
+    .sister-switch .ss-btn {
+      padding: 6px 12px; border-radius: 9px; font-size: 13px; font-weight: 600;
+      border: 1px solid var(--border); background: var(--card); color: var(--text-muted);
+      cursor: pointer; transition: all .15s;
+    }
+    .sister-switch .ss-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
+    .sister-switch .ss-btn:not(.active):hover { color: var(--text); border-color: var(--gold-deep); }
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 9px 16px; border-radius: 10px;
@@ -1316,10 +1325,12 @@
       .topbar-tabs { display: none; }
       .topbar-acct-actions { display: none !important; }
       .topbar-spacer { display: none; }
+      .sister-switch { display: flex; }
     }
     @media (max-width: 600px) {
       .more-btn { width: 36px; height: 36px; font-size: 16px; }
       .chip-btn { padding: 6px 10px; font-size: 12px; }
+      .page-head { flex-direction: column; align-items: flex-start; gap: 10px; }
     }
 
     /* ========== 详情页顶部 Tab ========== */
@@ -1604,7 +1615,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.1</span>
+        <span class="version-badge" id="versionBadge">v2.0.2</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -2643,6 +2654,10 @@
             <div class="page-title">📊 汇总仪表盘</div>
             <div class="page-sub">全局任务进度一览 · 点击未完成账号可跳转跟进</div>
           </div>
+          <div class="sister-switch">
+            <button class="ss-btn active" onclick="switchTab('overview')">📊 概览</button>
+            <button class="ss-btn" onclick="switchTab('detail')">📋 进度明细</button>
+          </div>
         </div>
 
         <div class="activity-bar">
@@ -2776,6 +2791,10 @@
               <div class="page-title">📋 进度明细</div>
               <div class="page-sub">各账号任务进度逐行明细</div>
             </div>
+            <div class="sister-switch">
+              <button class="ss-btn" onclick="switchTab('overview')">📊 概览</button>
+              <button class="ss-btn active" onclick="switchTab('detail')">📋 进度明细</button>
+            </div>
           </div>
           <div class="card empty-state">
             <div class="empty-state-icon">📋</div>
@@ -2791,6 +2810,10 @@
           <div>
             <div class="page-title">📋 进度明细</div>
             <div class="page-sub">各账号任务进度逐行明细 · 点击未完成账号可跳转跟进</div>
+          </div>
+          <div class="sister-switch">
+            <button class="ss-btn" onclick="switchTab('overview')">📊 概览</button>
+            <button class="ss-btn active" onclick="switchTab('detail')">📋 进度明细</button>
           </div>
         </div>
 
