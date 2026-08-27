@@ -1615,7 +1615,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.2</span>
+        <span class="version-badge" id="versionBadge">v2.0.3</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -3837,6 +3837,7 @@
                 <li>点顶栏 ☁️ 可启用云同步（基于 jsonbin.io 免费云存储），实现跨设备自动同步。</li>
                 <li>云同步配置：注册 jsonbin.io → 获取 API Key → 生成同步码 → 启用。</li>
                 <li>各设备填入相同的 API Key + 同步码即可共享数据，打开自动拉取、修改自动推送。</li>
+                <li>启用云同步后，页面每 60 秒后台静默拉取一次；其它标签页（同浏览器多窗口）改动数据也会即时刷新当前页。</li>
               </ul>
             </div>
             <div class="modal-foot">
@@ -4523,33 +4524,43 @@
       return { 'X-Master-Key': state.sync.apiKey, 'Content-Type': 'application/json', ...extra };
     }
 
-    async function syncPull() {
+    // opts.silent: 后台轮询使用，不切换状态按钮、不弹 toast、仅在数据确有变化时重渲染
+    async function syncPull(opts = {}) {
+      const silent = !!opts.silent;
       if (!state.sync.enabled || !state.sync.apiKey || !state.sync.code) { cloudPulled = true; return; }
-      state.sync.status = 'syncing'; updateSyncBtn();
+      if (!silent) { state.sync.status = 'syncing'; updateSyncBtn(); }
       try {
         const res = await fetch(`${JSONBIN_BASE}/${state.sync.code}/latest`, {
           headers: { 'X-Master-Key': state.sync.apiKey }
         });
-        if (!res.ok) { state.sync.status = 'err'; updateSyncBtn(); cloudPulled = true; return; }
+        if (!res.ok) { if (!silent) { state.sync.status = 'err'; updateSyncBtn(); } cloudPulled = true; return; }
         const data = await res.json();
         const record = data.record;
         if (record && record.accounts) {
-          state.accounts = Array.isArray(record.accounts) ? record.accounts.map(migrateAccount) : [];
-          state.activityEndDate = record.activityEndDate || null;
-          persistLocal();
-          state.sync.status = 'on'; updateSyncBtn();
-          render();
-          showToast('已从云端同步最新数据');
+          const incomingAccounts = Array.isArray(record.accounts) ? record.accounts.map(migrateAccount) : [];
+          const incomingDate = record.activityEndDate || null;
+          const same = JSON.stringify({ a: incomingAccounts, d: incomingDate }) === JSON.stringify({ a: state.accounts, d: state.activityEndDate });
+          if (same) {
+            if (!silent) { state.sync.status = 'on'; updateSyncBtn(); showToast('已是最新'); }
+          } else {
+            state.accounts = incomingAccounts;
+            state.activityEndDate = incomingDate;
+            persistLocal();
+            if (!silent) { state.sync.status = 'on'; updateSyncBtn(); }
+            render();
+            if (!silent) showToast('已从云端同步最新数据');
+          }
         } else {
-          state.sync.status = 'on'; updateSyncBtn();
+          if (!silent) { state.sync.status = 'on'; updateSyncBtn(); }
         }
       } catch (e) {
-        state.sync.status = 'err'; updateSyncBtn();
+        if (!silent) { state.sync.status = 'err'; updateSyncBtn(); }
       }
       cloudPulled = true;
     }
 
     let pushTimer = null;
+    let syncTimer = null;
     function syncPush() {
       if (!state.sync.enabled || !state.sync.apiKey || !state.sync.code) return;
       if (!cloudPulled) return; // 首次拉取完成前阻止推送，防止空数据覆盖云端
@@ -4568,6 +4579,19 @@
         }
         updateSyncBtn();
       }, 1500); // 1.5s 防抖
+    }
+
+    // 跨标签页：其它标签页写入 localStorage 后，本页主动刷新数据
+    function onStorageChange(e) {
+      if (!e || e.key !== STORAGE_KEY || !e.newValue) return;
+      let parsed;
+      try { parsed = JSON.parse(e.newValue); } catch (err) { return; }
+      if (Array.isArray(parsed.accounts)) state.accounts = parsed.accounts.map(migrateAccount);
+      if (parsed.activityEndDate != null) state.activityEndDate = parsed.activityEndDate;
+      // 用户正在输入时暂不重渲染，避免打断；数据已更新，下次切换即生效
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
+      render();
     }
 
     async function testSync() {
@@ -4643,6 +4667,14 @@
       render();
       updateSyncBtn();
       syncPull(); // 后台拉取，有新数据会自动 re-render
+
+      // 跨标签页：其它标签页更新数据后，本页主动刷新
+      window.addEventListener('storage', onStorageChange);
+      // 云端自动拉取：每 60 秒静默同步一次，仅当数据确有变化时才刷新当前页面
+      if (syncTimer) clearInterval(syncTimer);
+      syncTimer = setInterval(() => {
+        if (state.sync.enabled) syncPull({ silent: true });
+      }, 60000);
 
       // 顶栏 tab 切换（同时响应桌面顶栏和移动抽屉里的 data-nav）
       document.querySelectorAll('[data-nav]').forEach(el => {
