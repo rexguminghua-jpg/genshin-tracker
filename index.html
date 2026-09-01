@@ -418,10 +418,10 @@
       color: #fff;
       box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
     }
-    /* 砺行修远三栏 1:1:1 区域 */
+    /* 砺行修远四栏 1:1:1:1 区域 */
     .lixy-triple {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
       gap: 12px;
       margin-bottom: 14px;
     }
@@ -477,10 +477,32 @@
       padding: 8px 10px;
     }
     .lixy-triple-cell .points-prompt { margin-left: 0; }
+    @media (max-width: 1200px) {
+      .lixy-triple { grid-template-columns: 1fr 1fr; }
+    }
     @media (max-width: 720px) {
       .detail-tabs-inline { max-width: none; }
       .lixy-triple { grid-template-columns: 1fr; }
     }
+
+    /* v2.0.4：卡池情况模块 */
+    .pity-field.pity-saved .pity-input { color: #cf5fc0; }  /* 已攒抽数：蓝粉色（蓝粉间的品红） */
+    .lucky-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lucky-badge {
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1;
+      min-width: 18px;
+      text-align: center;
+    }
+    .lucky-badge.badge-fei { color: var(--red); }
+    .lucky-badge.badge-ou { color: var(--green); }
+    .switch-red input:checked + .switch-slider { background: var(--red); }
+    .switch-green input:checked + .switch-slider { background: var(--green); }
 
     .module-card {
       padding: 22px;
@@ -1615,7 +1637,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.3</span>
+        <span class="version-badge" id="versionBadge">v2.0.4</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -1925,7 +1947,9 @@
           finished: false,            // 8 次任务全完成标记
           finishedAt: null,
           remainingPoints: null,      // 剩余历练点（手动输入，精确至小数点后1位）
-          pityCount: null             // v1.9.16：5星卡池已垫抽数（0-90 整数，null=未填写）
+          pityCount: null,            // v1.9.16：5星卡池已垫抽数（0-90 整数，null=未填写）
+          savedPulls: null,           // v2.0.4：已攒抽数（0-999 整数，null=未填写）
+          lastOffBanner: false        // v2.0.4：上一抽是否歪（true=歪/非，false=欧）
         },
         dailyActivities: {
           participated: false,
@@ -1964,6 +1988,8 @@
       if (!acc.liXingXiuYuan) acc.liXingXiuYuan = {};
       if (acc.liXingXiuYuan.weekParticipated == null) acc.liXingXiuYuan.weekParticipated = true;
       if (acc.liXingXiuYuan.pityCount == null) acc.liXingXiuYuan.pityCount = null; // v1.9.16
+      if (acc.liXingXiuYuan.savedPulls == null) acc.liXingXiuYuan.savedPulls = null; // v2.0.4 已攒抽数
+      if (acc.liXingXiuYuan.lastOffBanner == null) acc.liXingXiuYuan.lastOffBanner = false; // v2.0.4 上一抽是否歪
       if (!acc.dailyActivities) acc.dailyActivities = { participated: false, stage: 'none', deadline: null, lastChangedAt: null };
       else {
         // v1.9.13：旧版 progress 字段兼容 → 映射到新 stage
@@ -3166,9 +3192,9 @@
 
       return `
         <section class="card module-card">
-          <!-- 三栏 1:1:1 区域：左=3 控制开关 / 中=进度统计 / 右=历练点 -->
+          <!-- 四栏 1:1:1:1 区域：左=控制开关 / 中左=卡池情况 / 中右=进度统计 / 右=历练点 -->
           <div class="lixy-triple">
-            <!-- 左：3 个控制开关 -->
+            <!-- 左：控制开关 -->
             <div class="lixy-triple-cell">
               <div class="triple-cell-title">⚙ 控制开关</div>
               <div class="switch-row">
@@ -3201,6 +3227,11 @@
                   <span class="switch-slider"></span>
                 </label>
               </div>
+            </div>
+
+            <!-- 中左：卡池情况（v2.0.4） -->
+            <div class="lixy-triple-cell">
+              <div class="triple-cell-title">🎴 卡池情况</div>
               <div class="switch-row">
                 <div>
                   <div class="switch-label">已垫抽数</div>
@@ -3212,9 +3243,33 @@
                   <span class="pity-suffix">】抽</span>
                 </div>
               </div>
+              <div class="switch-row">
+                <div>
+                  <div class="switch-label">已攒抽数</div>
+                  <div class="switch-help">当前持有的抽数（0-999）</div>
+                </div>
+                <div class="pity-field pity-saved">
+                  <span class="pity-prefix">已攒【</span>
+                  <input type="number" class="pity-input" id="inpSavedPulls" min="0" max="999" step="1" placeholder="0" value="${m.savedPulls != null ? m.savedPulls : ''}">
+                  <span class="pity-suffix">】抽</span>
+                </div>
+              </div>
+              <div class="switch-row">
+                <div>
+                  <div class="switch-label">上一抽是否歪</div>
+                  <div class="switch-help">开=非（歪了）· 关=欧（没歪）</div>
+                </div>
+                <div class="lucky-toggle">
+                  <label class="switch ${m.lastOffBanner ? 'switch-red' : 'switch-green'}">
+                    <input type="checkbox" data-toggle="lastOff" ${m.lastOffBanner ? 'checked' : ''}>
+                    <span class="switch-slider"></span>
+                  </label>
+                  <span class="lucky-badge ${m.lastOffBanner ? 'badge-fei' : 'badge-ou'}">${m.lastOffBanner ? '非' : '欧'}</span>
+                </div>
+              </div>
             </div>
 
-            <!-- 中：进度统计 -->
+            <!-- 中右：进度统计 -->
             <div class="lixy-triple-cell">
               <div class="triple-cell-title">📊 进度统计</div>
               <div class="stat-box">
@@ -3340,6 +3395,12 @@
               // 关闭 → 直接关闭（不弹确认，避免误触）
               setWeekParticipate(acc.id, false);
             }
+          } else if (k === 'lastOff') {
+            // v2.0.4：上一抽是否歪（checked=歪/非，unchecked=欧）
+            acc.liXingXiuYuan.lastOffBanner = input.checked;
+            saveState();
+            showToast(input.checked ? '已记录：上一抽歪了（非）' : '已记录：上一抽没歪（欧）');
+            render();
           }
         });
       });
@@ -3386,6 +3447,23 @@
         showToast('已垫抽数已更新');
         render();
       });
+      // v2.0.4：已攒抽数
+      const savedInput = document.getElementById('inpSavedPulls');
+      savedInput?.addEventListener('change', () => {
+        const raw = savedInput.value;
+        if (raw === '' || raw == null) {
+          acc.liXingXiuYuan.savedPulls = null;
+        } else {
+          const n = parseInt(raw, 10);
+          if (isNaN(n)) acc.liXingXiuYuan.savedPulls = null;
+          else acc.liXingXiuYuan.savedPulls = Math.max(0, Math.min(999, n));
+        }
+        saveState();
+        showToast('已攒抽数已更新');
+        render();
+      });
+      // v2.0.4：上一抽是否歪（true=非/歪，false=欧/没歪）
+      // 在 data-toggle 通用绑定内处理（见上方 forEach 的 k === 'lastOff' 分支）
       // 🔧 校准进度：按实际打卡记录重算总任务进度
       const btnCal = root.querySelector('#btnCalibrate');
       if (btnCal) btnCal.addEventListener('click', () => {
