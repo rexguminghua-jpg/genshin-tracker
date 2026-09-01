@@ -1664,7 +1664,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.5</span>
+        <span class="version-badge" id="versionBadge">v2.0.6</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -1989,12 +1989,15 @@
           participated: false,
           currentFloor: 1,    // 1-12
           currentChamber: 1,  // 1-3
-          completed: false    // 当期已通关
+          completed: false,   // 当期已通关
+          periodKey: null     // v2.0.6：所属周期（=周期结束日，变更时自动重置开关）
         },
         // v1.9.0 新增：幻想真境剧诗（周期固定：当月1日 → 月底）
         imaginationTheatre: {
           participated: false,
-          elements: []      // v1.9.13：当期限制元素（最多 3 个，存元素 key 数组）
+          elements: [],       // v1.9.13：当期限制元素（最多 3 个，存元素 key 数组）
+          currentAct: null,   // v2.0.6：已下完幕数（1-10，null=未选择）
+          periodKey: null     // v2.0.6：所属月份（变更时自动重置开关）
         },
         // v1.9.0 新增：幽境危战
         stygianOnslaught: {
@@ -2029,9 +2032,14 @@
         }
         if (acc.dailyActivities.deadline == null) acc.dailyActivities.deadline = null;
       }
-      if (!acc.spiralAbyss) acc.spiralAbyss = { participated: false, currentFloor: 1, currentChamber: 1, completed: false };
-      if (!acc.imaginationTheatre) acc.imaginationTheatre = { participated: false, elements: [] };
-      else if (!Array.isArray(acc.imaginationTheatre.elements)) acc.imaginationTheatre.elements = [];
+      if (!acc.spiralAbyss) acc.spiralAbyss = { participated: false, currentFloor: 1, currentChamber: 1, completed: false, periodKey: null };
+      else if (acc.spiralAbyss.periodKey === undefined) acc.spiralAbyss.periodKey = null; // v2.0.6 周期键
+      if (!acc.imaginationTheatre) acc.imaginationTheatre = { participated: false, elements: [], currentAct: null, periodKey: null };
+      else {
+        if (!Array.isArray(acc.imaginationTheatre.elements)) acc.imaginationTheatre.elements = [];
+        if (acc.imaginationTheatre.currentAct === undefined) acc.imaginationTheatre.currentAct = null; // v2.0.6 已下完幕数
+        if (acc.imaginationTheatre.periodKey === undefined) acc.imaginationTheatre.periodKey = null; // v2.0.6 周期键
+      }
       if (!acc.stygianOnslaught) acc.stygianOnslaught = { participated: false, startDate: null, deadline: null,
         challenges: [ { done: null }, { done: null }, { done: null }, { done: null }, { done: null } ] };
       else if (!Array.isArray(acc.stygianOnslaught.challenges) || acc.stygianOnslaught.challenges.length !== 5) {
@@ -2089,6 +2097,89 @@
         }
       }
       return null;
+    }
+
+    // v2.0.6：周期键
+    function currentSpiralPeriodKey() { return spiralCycleEnd(); } // 周期结束日唯一标识一个周期
+    function currentTheatrePeriodKey() {
+      const n = adjustedNow();
+      return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // v2.0.6：剧诗限制元素模板 — 取第一个已设置元素账号的当期元素
+    function findTheatreElementsTemplate(excludeId) {
+      for (const a of state.accounts) {
+        if (a.id === excludeId) continue;
+        const el = a.imaginationTheatre && a.imaginationTheatre.elements;
+        if (Array.isArray(el) && el.length) return el.slice();
+      }
+      return null;
+    }
+
+    // v2.0.6：活动到期/周期重置后，参与开关自动置为关，等待手动打开
+    // 触发规则：
+    //   日常活动 / 幽境危战：截止日期已过（adjustedNow 超过截止日当天）→ 关闭并清空日期
+    //   深境螺旋：periodKey 与当前周期（16日周期）不一致 → 关闭并重置层数/间数/通关标记
+    //   幻想真境剧诗：periodKey 与当前月份不一致 → 关闭并清空限制元素/幕数
+    // 返回是否有数据变更（有则已自动 saveState）
+    function autoResetExpiredActivities() {
+      if (!Array.isArray(state.accounts)) return false;
+      let changed = false;
+      for (const acc of state.accounts) {
+        // 1) 日常活动：截止已过 → 自动关闭
+        const d = acc.dailyActivities;
+        if (d && d.participated && d.deadline) {
+          const info = timeRemainingInfo(d.deadline);
+          if (info && info.expired) {
+            d.participated = false;
+            d.stage = 'none';
+            d.deadline = null;
+            d.lastChangedAt = new Date().toISOString();
+            changed = true;
+          }
+        }
+        // 2) 深境螺旋：周期变更 → 自动关闭并重置进度
+        const sp = acc.spiralAbyss;
+        if (sp) {
+          const pk = currentSpiralPeriodKey();
+          if (sp.periodKey == null) { sp.periodKey = pk; changed = true; } // 旧数据首次补齐，不重置
+          else if (sp.periodKey !== pk) {
+            sp.periodKey = pk;
+            sp.participated = false;
+            sp.completed = false;
+            sp.currentFloor = 1;
+            sp.currentChamber = 1;
+            changed = true;
+          }
+        }
+        // 3) 幻想真境剧诗：月份变更 → 自动关闭并清空限制元素/幕数
+        const th = acc.imaginationTheatre;
+        if (th) {
+          const pk = currentTheatrePeriodKey();
+          if (th.periodKey == null) { th.periodKey = pk; changed = true; } // 旧数据首次补齐，不重置
+          else if (th.periodKey !== pk) {
+            th.periodKey = pk;
+            th.participated = false;
+            th.elements = [];
+            th.currentAct = null;
+            changed = true;
+          }
+        }
+        // 4) 幽境危战：截止已过 → 自动关闭并清空
+        const st = acc.stygianOnslaught;
+        if (st && st.participated && st.deadline) {
+          const info = timeRemainingInfo(st.deadline, st.startDate);
+          if (info && info.expired) {
+            st.participated = false;
+            st.startDate = null;
+            st.deadline = null;
+            st.challenges = [ { done: null }, { done: null }, { done: null }, { done: null }, { done: null } ];
+            changed = true;
+          }
+        }
+      }
+      if (changed) saveState();
+      return changed;
     }
 
     // 切「参与」
@@ -2530,7 +2621,25 @@
     function toggleTheatre(id) {
       const acc = findAccount(id);
       if (!acc) return;
-      acc.imaginationTheatre.participated = !acc.imaginationTheatre.participated;
+      const willOn = !acc.imaginationTheatre.participated;
+      acc.imaginationTheatre.participated = willOn;
+      // v2.0.6：开启参与且本账号尚未设置限制元素时，自动带入其他账号已选的当期元素
+      if (willOn && (!Array.isArray(acc.imaginationTheatre.elements) || acc.imaginationTheatre.elements.length === 0)) {
+        const tpl = findTheatreElementsTemplate(acc.id);
+        if (tpl) {
+          acc.imaginationTheatre.elements = tpl;
+          showToast('已自动带入当期限制元素（复用其他账号）');
+        }
+      }
+      saveState();
+    }
+
+    // v2.0.6：更新剧诗已下完幕数（1-10，null=未选择）
+    function updateTheatreAct(id, act) {
+      const acc = findAccount(id);
+      if (!acc) return;
+      const n = parseInt(act, 10);
+      acc.imaginationTheatre.currentAct = (isNaN(n) || n < 1 || n > 10) ? null : n;
       saveState();
     }
 
@@ -2566,6 +2675,8 @@
     const root = document.getElementById('root');
 
     function render() {
+      // v2.0.6：活动到期/周期重置检查（有变更会自动 saveState，随后按新状态渲染）
+      autoResetExpiredActivities();
       // 顶栏 tab active 高亮
       document.querySelectorAll('[data-nav]').forEach(el => {
         el.classList.toggle('active', el.dataset.nav === state.tab);
@@ -3504,8 +3615,8 @@
 
     // ===== 详情页 - 日常活动 Tab（v1.9.14 卡片化 2×2） =====
     function renderDetailDaily(acc, d, spiral, theatre, stygian) {
-      spiral = spiral || { participated: false, currentFloor: 1, currentChamber: 1, completed: false };
-      theatre = theatre || { participated: false, elements: [] };
+      spiral = spiral || { participated: false, currentFloor: 1, currentChamber: 1, completed: false, periodKey: null };
+      theatre = theatre || { participated: false, elements: [], currentAct: null, periodKey: null };
       stygian = stygian || { participated: false, startDate: null, deadline: null,
         challenges: [ { done: null }, { done: null }, { done: null }, { done: null }, { done: null } ] };
 
@@ -3667,6 +3778,13 @@
                 <div class="remain-track"><div class="remain-fill" style="width:${Math.round(theatreRemain.ratio*100)}%;background:${theatreRemain.color}"></div></div>
                 <span class="remain-label" style="color:${theatreRemain.color}">${theatreRemain.label}（至 ${theatreEnd}）</span>
               </div>
+              <div class="field-row">
+                <label class="field-label">挑战进度</label>
+                <select class="field-select" data-theatre-act>
+                  <option value="" ${theatre.currentAct == null ? 'selected' : ''}>未选择</option>
+                  ${Array.from({length:10},(_,i)=>i+1).map(a => `<option value="${a}" ${theatre.currentAct==a?'selected':''}>已下完第${a}幕</option>`).join('')}
+                </select>
+              </div>
               <div class="field-label" style="margin-top:2px">当期限制元素（最多 3 个）</div>
               <div class="elem-show">
                 ${theatreSel.length ? theatreSel.map(k => {
@@ -3792,6 +3910,9 @@
           render();
         });
       });
+      // v2.0.6：剧诗已下完幕数
+      const theatreActSel = root.querySelector('[data-theatre-act]');
+      theatreActSel?.addEventListener('change', () => { updateTheatreAct(acc.id, theatreActSel.value); render(); });
       // 幽境危战 — 开启日期 / 截止时间
       root.querySelectorAll('[data-stygian-date]').forEach(inp => {
         inp.addEventListener('change', () => { setStygianDate(acc.id, inp.dataset.stygianDate, inp.value || null); render(); });
@@ -4755,6 +4876,8 @@
      * ============================================================ */
     function init() {
       loadState();
+      // v2.0.6：启动时执行一次到期/周期重置检查
+      autoResetExpiredActivities();
 
       // URL hash 同步配置：#sync=<apiKey>&<code> — 跨域名迁移同步设置
       const hashMatch = location.hash.match(/^#sync=(.+)&(.+)$/);
