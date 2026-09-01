@@ -1213,6 +1213,7 @@
     .pity-text { font-size: 12px; }
     .acct-pool-star { color: var(--gold); margin-left: 4px; font-size: 13px; }
     .acct-pity { font-size: 12px; margin-top: 2px; }
+    .pity-saved-text { color: #cf5fc0; font-weight: 700; }  /* v2.0.7 已攒抽数：蓝粉 */
     .pity-field {
       display: inline-flex; align-items: center; gap: 1px;
       font-size: 12px;
@@ -1664,7 +1665,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.6</span>
+        <span class="version-badge" id="versionBadge">v2.0.7</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -2400,6 +2401,13 @@
       return `<span class="${cls}" title="${title}">${text}</span>`;
     }
 
+    // v2.0.7：渲染只读展示「已攒【X】抽」/「【X】抽」（蓝粉色，同详情页输入色）
+    function savedPullsTextHtml(n, short = false) {
+      if (n == null) return '';
+      const text = short ? `【${n}】抽` : `已攒【${n}】抽`;
+      return `<span class="pity-saved-text" title="5星卡池已攒抽数">${text}</span>`;
+    }
+
     // 计算全局汇总
     function computeSummary() {
       const total = state.accounts.length;
@@ -2623,6 +2631,10 @@
       if (!acc) return;
       const willOn = !acc.imaginationTheatre.participated;
       acc.imaginationTheatre.participated = willOn;
+      // v2.0.7：关闭时清空本账号限制元素，避免残留导致重开时无法复用其他账号的当期元素
+      if (!willOn) {
+        acc.imaginationTheatre.elements = [];
+      }
       // v2.0.6：开启参与且本账号尚未设置限制元素时，自动带入其他账号已选的当期元素
       if (willOn && (!Array.isArray(acc.imaginationTheatre.elements) || acc.imaginationTheatre.elements.length === 0)) {
         const tpl = findTheatreElementsTemplate(acc.id);
@@ -2989,6 +3001,8 @@
                 <tr>
                   <th style="width:48px;text-align:center">入卡池</th>
                   <th style="width:100px;text-align:center">已垫抽数</th>
+                  <th style="width:100px;text-align:center">已攒抽数</th>
+                  <th style="width:72px;text-align:center">上一抽</th>
                   <th style="width:240px">账号</th>
                   <th style="width:120px">砺行修远(累计)</th>
                   <th style="width:104px">本周打卡</th>
@@ -3069,6 +3083,8 @@
         <tr class="${rowCls}">
           <td style="text-align:center;font-size:18px">${m.focusTraining ? '⭐' : ''}</td>
           <td style="text-align:center">${pityTextHtml(m.pityCount, true) || '<span style="color:var(--text-faint)">—</span>'}</td>
+          <td style="text-align:center">${savedPullsTextHtml(m.savedPulls, true) || '<span style="color:var(--text-faint)">—</span>'}</td>
+          <td style="text-align:center"><span style="display:inline-block;min-width:22px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;color:#fff;background:${m.lastOffBanner ? 'var(--red)' : 'var(--green)'}" title="上一抽是否歪：歪=非，没歪=欧">${m.lastOffBanner ? '非' : '欧'}</span></td>
           <td>
             <div class="acct-cell">
               <div class="avatar" style="background:linear-gradient(135deg,${c1},${c2})">${escapeHtml(accountInitials(acc.name))}</div>
@@ -3203,6 +3219,7 @@
               <div class="acct-name">${escapeHtml(acc.name)}${m.focusTraining ? ' <span class="acct-pool-star" title="入卡池">⭐</span>' : ''}</div>
               <div class="acct-uid">${acc.uid ? `UID ${escapeHtml(acc.uid)} · ` : ''}${escapeHtml(acc.server)}</div>
               ${pityTextHtml(m.pityCount) ? `<div class="acct-pity">${pityTextHtml(m.pityCount)}</div>` : ''}
+              ${savedPullsTextHtml(m.savedPulls) ? `<div class="acct-pity">${savedPullsTextHtml(m.savedPulls)}</div>` : ''}
             </div>
             <button class="btn btn-sm btn-ghost" data-act="edit" data-id="${acc.id}" title="编辑">✏️</button>
             <button class="btn btn-sm btn-ghost" data-act="delete" data-id="${acc.id}" title="删除">🗑️</button>
