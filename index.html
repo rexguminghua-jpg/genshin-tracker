@@ -487,22 +487,49 @@
 
     /* v2.0.4：卡池情况模块 */
     .pity-field.pity-saved .pity-input { color: #cf5fc0; }  /* 已攒抽数：蓝粉色（蓝粉间的品红） */
-    .lucky-toggle {
+    /* v2.0.5：上一抽是否歪 — 文字内嵌开关（非=红底白字 / 欧=绿底白字） */
+    .lucky-switch {
+      position: relative;
+      display: inline-flex;
+      cursor: pointer;
+      user-select: none;
+    }
+    .lucky-switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .lucky-pill {
       display: flex;
       align-items: center;
-      gap: 8px;
+      width: 66px;
+      height: 28px;
+      padding: 3px;
+      border-radius: 999px;
+      transition: background 0.25s ease;
     }
-    .lucky-badge {
-      font-size: 16px;
-      font-weight: 800;
-      line-height: 1;
-      min-width: 18px;
+    .lucky-pill.is-fei { background: var(--red); }       /* 歪=非：红底白字 */
+    .lucky-pill.is-ou { background: var(--green); }      /* 没歪=欧：绿底白字 */
+    .lucky-word {
+      flex: 1;
       text-align: center;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      line-height: 1;
     }
-    .lucky-badge.badge-fei { color: var(--red); }
-    .lucky-badge.badge-ou { color: var(--green); }
-    .switch-red input:checked + .switch-slider { background: var(--red); }
-    .switch-green input:checked + .switch-slider { background: var(--green); }
+    .lucky-knob {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+    /* 非（选中）：文字左、圆点右；欧（未选）：圆点左、文字右 */
+    .lucky-pill.is-fei { flex-direction: row; }
+    .lucky-pill.is-ou { flex-direction: row-reverse; }
 
     .module-card {
       padding: 22px;
@@ -1637,7 +1664,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.4</span>
+        <span class="version-badge" id="versionBadge">v2.0.5</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -3257,15 +3284,15 @@
               <div class="switch-row">
                 <div>
                   <div class="switch-label">上一抽是否歪</div>
-                  <div class="switch-help">开=非（歪了）· 关=欧（没歪）</div>
+                  <div class="switch-help">歪=非（红）· 没歪=欧（绿）</div>
                 </div>
-                <div class="lucky-toggle">
-                  <label class="switch ${m.lastOffBanner ? 'switch-red' : 'switch-green'}">
-                    <input type="checkbox" data-toggle="lastOff" ${m.lastOffBanner ? 'checked' : ''}>
-                    <span class="switch-slider"></span>
-                  </label>
-                  <span class="lucky-badge ${m.lastOffBanner ? 'badge-fei' : 'badge-ou'}">${m.lastOffBanner ? '非' : '欧'}</span>
-                </div>
+                <label class="lucky-switch">
+                  <input type="checkbox" data-toggle="lastOff" ${m.lastOffBanner ? 'checked' : ''}>
+                  <span class="lucky-pill ${m.lastOffBanner ? 'is-fei' : 'is-ou'}">
+                    <span class="lucky-word">${m.lastOffBanner ? '非' : '欧'}</span>
+                    <span class="lucky-knob"></span>
+                  </span>
+                </label>
               </div>
             </div>
 
