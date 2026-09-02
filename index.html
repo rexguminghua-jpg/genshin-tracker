@@ -207,18 +207,8 @@
     .card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 
     /* ========== 账号列表 ========== */
-    .page-head {
-      display: flex; align-items: flex-end; justify-content: space-between;
-      margin: 4px 4px 18px;
-    }
-    .page-title {
-      font-size: 22px; font-weight: 700; letter-spacing: 0.5px;
-    }
-    .page-sub {
-      color: var(--text-muted); font-size: 13px; margin-top: 4px;
-    }
     /* 页内姊妹页快捷切换：仅窄屏显示（顶栏 tab 在 <=960px 隐藏时作为兜底） */
-    .sister-switch { display: none; gap: 6px; }
+    .sister-switch { display: none; gap: 6px; margin: 0 4px 12px; }
     .sister-switch .ss-btn {
       padding: 6px 12px; border-radius: 9px; font-size: 13px; font-weight: 600;
       border: 1px solid var(--border); background: var(--card); color: var(--text-muted);
@@ -843,7 +833,6 @@
       .account-grid { grid-template-columns: 1fr; }
       .topbar-inner { padding: 10px 14px; }
       .brand { font-size: 16px; }
-      .page-title { font-size: 18px; }
       .big-stat { gap: 8px; }
       .stat-num { font-size: 22px; }
     }
@@ -1380,7 +1369,6 @@
     @media (max-width: 600px) {
       .more-btn { width: 36px; height: 36px; font-size: 16px; }
       .chip-btn { padding: 6px 10px; font-size: 12px; }
-      .page-head { flex-direction: column; align-items: flex-start; gap: 10px; }
     }
 
     /* ========== 详情页顶部 Tab ========== */
@@ -1665,7 +1653,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.7</span>
+        <span class="version-badge" id="versionBadge">v2.0.8</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -2825,15 +2813,9 @@
             : `<span class="weeks-badge ok">剩余 ${rw} 周</span>`;
 
       root.innerHTML = `
-        <div class="page-head">
-          <div>
-            <div class="page-title">📊 汇总仪表盘</div>
-            <div class="page-sub">全局任务进度一览 · 点击未完成账号可跳转跟进</div>
-          </div>
-          <div class="sister-switch">
-            <button class="ss-btn active" onclick="switchTab('overview')">📊 概览</button>
-            <button class="ss-btn" onclick="switchTab('detail')">📋 进度明细</button>
-          </div>
+        <div class="sister-switch">
+          <button class="ss-btn active" onclick="switchTab('overview')">📊 概览</button>
+          <button class="ss-btn" onclick="switchTab('detail')">📋 进度明细</button>
         </div>
 
         <div class="activity-bar">
@@ -2962,15 +2944,9 @@
 
       if (list.length === 0) {
         root.innerHTML = `
-          <div class="page-head">
-            <div>
-              <div class="page-title">📋 进度明细</div>
-              <div class="page-sub">各账号任务进度逐行明细</div>
-            </div>
-            <div class="sister-switch">
-              <button class="ss-btn" onclick="switchTab('overview')">📊 概览</button>
-              <button class="ss-btn active" onclick="switchTab('detail')">📋 进度明细</button>
-            </div>
+          <div class="sister-switch">
+            <button class="ss-btn" onclick="switchTab('overview')">📊 概览</button>
+            <button class="ss-btn active" onclick="switchTab('detail')">📋 进度明细</button>
           </div>
           <div class="card empty-state">
             <div class="empty-state-icon">📋</div>
@@ -2982,15 +2958,9 @@
       }
 
       root.innerHTML = `
-        <div class="page-head">
-          <div>
-            <div class="page-title">📋 进度明细</div>
-            <div class="page-sub">各账号任务进度逐行明细 · 点击未完成账号可跳转跟进</div>
-          </div>
-          <div class="sister-switch">
-            <button class="ss-btn" onclick="switchTab('overview')">📊 概览</button>
-            <button class="ss-btn active" onclick="switchTab('detail')">📋 进度明细</button>
-          </div>
+        <div class="sister-switch">
+          <button class="ss-btn" onclick="switchTab('overview')">📊 概览</button>
+          <button class="ss-btn active" onclick="switchTab('detail')">📋 进度明细</button>
         </div>
 
         <div class="card" style="padding:18px 22px;margin-top:18px;">
@@ -3128,13 +3098,6 @@
     function renderList() {
       const list = state.accounts;
       root.innerHTML = `
-        <div class="page-head">
-          <div>
-            <div class="page-title">我的账号</div>
-            <div class="page-sub">共 ${list.length} 个账号 · 数据保存在浏览器本地</div>
-          </div>
-        </div>
-
         ${list.length === 0 ? `
           <div class="card empty-state">
             <div class="empty-state-icon">📋</div>
