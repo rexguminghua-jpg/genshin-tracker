@@ -1653,7 +1653,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.8</span>
+        <span class="version-badge" id="versionBadge">v2.0.9</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -4387,7 +4387,8 @@
                 4. 点「生成」创建同步码<br>
                 5. 勾选「启用自动同步」→ 保存<br>
                 6. 其他设备：点「生成同步链接」→ 复制链接在新设备打开，自动配置<br>
-                <span style="color:var(--text-muted);font-size:12px">打开页面自动拉取，每次修改自动推送（1.5s 防抖）</span>
+                <span style="color:var(--text-muted);font-size:12px">打开页面自动拉取，每次修改自动推送（1.5s 防抖）</span><br>
+                <span style="color:var(--text-muted);font-size:12px">推送失败排查：①API Key 是否过期 ②同步码对应 bin 是否被删 ③浏览器到 api.jsonbin.io 网络是否通畅（国内网络偶尔不稳）④JSON 体超过 10KB（jsonbin 免费版上限）</span>
               </div>
             </div>
             <div class="modal-foot">
@@ -4421,11 +4422,21 @@
             method: 'PUT',
             headers: syncHeaders(),
             body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, updatedAt: new Date().toISOString() })
-          }).then(r => {
+          }).then(async r => {
             state.sync.status = r.ok ? 'on' : 'err';
             updateSyncBtn();
-            showToast(r.ok ? '已推送到云端' : '推送失败');
-          }).catch(() => { state.sync.status = 'err'; updateSyncBtn(); showToast('推送失败'); });
+            if (r.ok) {
+              showToast('已推送到云端');
+            } else {
+              let body = '';
+              try { body = (await r.text()).slice(0, 200); } catch {}
+              const msg = body || (typeof r.statusText === 'string' ? r.statusText : '');
+              showToast(`推送失败：HTTP ${r.status}${msg ? ' · ' + msg : ''}`);
+            }
+          }).catch((e) => {
+            state.sync.status = 'err'; updateSyncBtn();
+            showToast('推送失败：' + (e && e.message ? e.message : '网络异常'));
+          });
         });
         modal.querySelector('#btnSyncLink')?.addEventListener('click', () => {
           const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || state.sync.apiKey;
@@ -4780,8 +4791,19 @@
             body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, updatedAt: new Date().toISOString() })
           });
           state.sync.status = res.ok ? 'on' : 'err';
+          if (!res.ok) {
+            // v2.0.9：首次推送失败时显示具体状态码，便于诊断（仅同步码不一致/被删除/Key失效等场景）
+            const body = await res.text().catch(() => '');
+            console.warn('[sync] push failed', res.status, body.slice(0, 200));
+            // 通过 sessionStorage 记忆本次失败原因，下一次 pushToast 触发时读取
+            sessionStorage.setItem('sync_last_err', `HTTP ${res.status}${body ? ' · ' + body.slice(0, 120) : ''}`);
+          } else {
+            sessionStorage.removeItem('sync_last_err');
+          }
         } catch (e) {
           state.sync.status = 'err';
+          console.warn('[sync] push network error', e);
+          sessionStorage.setItem('sync_last_err', `网络异常：${e && e.message ? e.message : 'unknown'}`);
         }
         updateSyncBtn();
       }, 1500); // 1.5s 防抖
