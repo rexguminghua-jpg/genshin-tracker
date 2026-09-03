@@ -1653,7 +1653,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.0.9</span>
+        <span class="version-badge" id="versionBadge">v2.1.0</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -4430,8 +4430,14 @@
             } else {
               let body = '';
               try { body = (await r.text()).slice(0, 200); } catch {}
-              const msg = body || (typeof r.statusText === 'string' ? r.statusText : '');
-              showToast(`推送失败：HTTP ${r.status}${msg ? ' · ' + msg : ''}`);
+              // v2.0.9：jsonbin 配额耗尽专项处理
+              if (r.status === 403 && /Requests exhausted/i.test(body)) {
+                state.sync.status = 'quota'; updateSyncBtn();
+                state.modal = 'quotaExhausted'; state.modalCtx = { provider: 'jsonbin.io' }; render();
+              } else {
+                const msg = body || (typeof r.statusText === 'string' ? r.statusText : '');
+                showToast(`推送失败：HTTP ${r.status}${msg ? ' · ' + msg : ''}`);
+              }
             }
           }).catch((e) => {
             state.sync.status = 'err'; updateSyncBtn();
@@ -4448,6 +4454,43 @@
           if (box && inp) { inp.value = link; box.style.display = 'block'; inp.select(); }
           navigator.clipboard?.writeText(link).then(() => showToast('同步链接已复制到剪贴板')).catch(() => showToast('链接已生成，请手动复制'));
         });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        return;
+      }
+
+      // v2.0.9：云端配额耗尽提示
+      if (state.modal === 'quotaExhausted') {
+        modal = document.createElement('div');
+        modal.className = 'modal-mask';
+        modal.innerHTML = `
+          <div class="modal-card" style="max-width:520px">
+            <div class="modal-head">
+              <div class="modal-title">⚠️ 云端配额已耗尽</div>
+              <button class="btn-icon" data-act="close">✕</button>
+            </div>
+            <div class="modal-body" style="font-size:14px;line-height:1.7">
+              <p style="margin:0 0 12px">你当前使用的 <b>jsonbin.io</b> 服务的 API Key 年度配额已耗尽（免费版每 Key 约 1 万次/年）。</p>
+              <p style="margin:0 0 12px"><b>💡 临时方案</b>（1 分钟）：用邮箱再注册一个 jsonbin.io 账号 → 复制新的 X-Master-Key → 在此弹窗点"更换 API Key"粘贴 → 点"生成"创建新同步码。</p>
+              <p style="margin:0 0 12px"><b>🚀 长期方案（推荐）</b>：迁移到 <b>Cloudflare Workers KV</b> —— 每天 10 万次免费读写，国内访问快，不会再有配额耗尽问题。</p>
+              <div style="background:var(--card);border-radius:8px;padding:12px;margin-top:14px;font-size:12.5px;color:var(--text-muted);line-height:1.6">
+                <b style="color:var(--text)">迁移步骤：</b><br>
+                1. 注册 <a href="https://dash.cloudflare.com/sign-up" target="_blank" style="color:var(--blue)">Cloudflare</a>（免费）<br>
+                2. 创建 Worker + KV 命名空间（5 分钟，含下方迁移链接教程）<br>
+                3. 把 Worker URL 粘到本应用的"云同步 URL"设置（v2.1.0 将支持）<br>
+                4. 现状先用本地浏览器保存 + 「导出 JSON」做备份，避免丢数据
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn" data-act="export">📥 先导出本地备份</button>
+              <button class="btn btn-ghost" data-act="changeKey">更换 API Key</button>
+              <button class="btn" data-act="close">关闭</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
+        modal.querySelector('[data-act=changeKey]')?.addEventListener('click', () => { closeModal(); state.modal = 'syncSettings'; render(); });
+        modal.querySelector('[data-act=export]')?.addEventListener('click', () => { exportData(); closeModal(); });
         modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
         return;
       }
@@ -4797,6 +4840,12 @@
             console.warn('[sync] push failed', res.status, body.slice(0, 200));
             // 通过 sessionStorage 记忆本次失败原因，下一次 pushToast 触发时读取
             sessionStorage.setItem('sync_last_err', `HTTP ${res.status}${body ? ' · ' + body.slice(0, 120) : ''}`);
+            // v2.0.9：jsonbin 配额耗尽专项处理
+            if (res.status === 403 && /Requests exhausted/i.test(body)) {
+              state.sync.status = 'quota';
+              state.modal = 'quotaExhausted'; state.modalCtx = { provider: 'jsonbin.io' };
+              render();
+            }
           } else {
             sessionStorage.removeItem('sync_last_err');
           }
@@ -4867,8 +4916,8 @@
       if (!btn) return;
       const s = state.sync;
       if (!s.enabled) { btn.innerHTML = '☁️'; btn.title = '云同步（未启用）'; return; }
-      const map = { off: '☁️', syncing: '⏳', on: '☁️✓', err: '☁️!' };
-      const tip = { off: '云同步（未启用）', syncing: '云同步中…', on: '云同步已连接', err: '云同步失败' };
+      const map = { off: '☁️', syncing: '⏳', on: '☁️✓', err: '☁️!', quota: '☁️⚠️' };
+      const tip = { off: '云同步（未启用）', syncing: '云同步中…', on: '云同步已连接', err: '云同步失败', quota: '云端配额耗尽，点击查看迁移方案' };
       btn.innerHTML = map[s.status] || '☁️';
       btn.title = tip[s.status] || '';
     }
