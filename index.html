@@ -1653,7 +1653,7 @@
       <div class="brand">
         <div class="brand-mark">原</div>
         <span class="brand-text">原神任务追踪器</span>
-        <span class="version-badge" id="versionBadge">v2.1.0</span>
+        <span class="version-badge" id="versionBadge">v2.2.0</span>
       </div>
       <nav class="topbar-tabs" id="topbarTabs">
         <button class="tab-chip" data-nav="overview"><span class="tab-icon">📊</span><span>概览</span></button>
@@ -1744,7 +1744,7 @@
       detailTab: 'lixy',   // 'lixy' | 'daily' (详情页内部)
       modal: null,         // 'addAccount' | 'editAccount' | 'help' | 'changelog' | 'syncSettings' | null
       modalCtx: {},
-      sync: { apiKey: '', code: '', enabled: false, status: 'off' },  // 'off' | 'syncing' | 'on' | 'err'
+      sync: { apiKey: '', code: '', base: '', enabled: false, status: 'off' },  // base: v2.2.0 自定义同步地址（Cloudflare Workers KV），留空走 jsonbin.io
       mobileSidebarOpen: false
     };
 
@@ -1761,9 +1761,10 @@
           if (parsed.sync) {
             // 旧格式迁移：有 url 无 apiKey → 重置同步配置
             if (parsed.sync.url && !parsed.sync.apiKey) {
-              state.sync = { apiKey: '', code: '', enabled: false, status: 'off' };
+              state.sync = { apiKey: '', code: '', base: '', enabled: false, status: 'off' };
             } else {
               state.sync = { ...state.sync, ...parsed.sync };
+              if (state.sync.base == null) state.sync.base = ''; // v2.2.0 旧数据补齐
             }
           }
         }
@@ -4347,10 +4348,20 @@
             </div>
             <div class="modal-body">
               <div class="field">
-                <label class="field-label">jsonbin.io API Key <span style="color:var(--red)">*</span></label>
-                <input class="field-input" id="inpSyncApiKey" placeholder="$2a$10$..." value="${escapeHtml(s.apiKey)}" />
+                <label class="field-label">同步服务地址（可选，推荐 Cloudflare Workers KV）</label>
+                <input class="field-input" id="inpSyncBase" placeholder="留空 = 使用 jsonbin.io；填 https://xxx.workers.dev 用自建后端" value="${escapeHtml(s.base || '')}" />
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
-                  免费获取：<a href="https://jsonbin.io" target="_blank" style="color:var(--blue)">jsonbin.io</a> → 注册 → API Keys → 复制 X-Master-Key
+                  留空走 <b>jsonbin.io</b>（免费版约 1 万次/年，易耗尽）。<br>
+                  填入自建 <b>Cloudflare Workers KV</b> 地址可永久免费（10 万次读/天、国内访问快），<a href="https://dash.cloudflare.com/sign-up" target="_blank" style="color:var(--blue)">点此注册 Cloudflare</a>。
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">API Key <span style="color:var(--red)">*</span></label>
+                <input class="field-input" id="inpSyncApiKey" placeholder="${s.base ? '填你在 Worker 环境变量里设的 API_KEY' : '$2a$10$...'}" value="${escapeHtml(s.apiKey)}" />
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+                  ${s.base
+                    ? '自建后端：填你在 Cloudflare Worker 环境变量 <b>API_KEY</b> 里设置的自定义密码（如 mySyncPass123）'
+                    : '免费获取：<a href="https://jsonbin.io" target="_blank" style="color:var(--blue)">jsonbin.io</a> → 注册 → API Keys → 复制 X-Master-Key'}
                 </div>
               </div>
               <div class="field">
@@ -4380,15 +4391,22 @@
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px">复制此链接在其他设备/域名打开，可自动配置同步并拉取数据（含凭据，勿公开分享）</div>
               </div>
               <div style="margin-top:16px;padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text-muted);line-height:1.6">
-                <strong style="color:var(--text)">使用步骤：</strong><br>
+                <strong style="color:var(--text)">使用步骤（jsonbin.io 模式）：</strong><br>
                 1. 注册 <a href="https://jsonbin.io" target="_blank" style="color:var(--blue)">jsonbin.io</a>（免费，支持 Google 登录）<br>
                 2. 在 API Keys 页面复制你的 X-Master-Key<br>
-                3. 粘贴到上方 API Key 输入框<br>
+                3. 粘贴到上方 API Key 输入框（同步服务地址留空）<br>
                 4. 点「生成」创建同步码<br>
                 5. 勾选「启用自动同步」→ 保存<br>
                 6. 其他设备：点「生成同步链接」→ 复制链接在新设备打开，自动配置<br>
+                <br>
+                <strong style="color:var(--text)">使用步骤（Cloudflare Workers KV 模式，推荐）：</strong><br>
+                1. 注册 <a href="https://dash.cloudflare.com/sign-up" target="_blank" style="color:var(--blue)">Cloudflare</a>（免费，无需绑卡）<br>
+                2. Workers &amp; Pages → 创建 Worker → 粘贴 Worker 代码 → 部署<br>
+                3. Settings → Variables：绑定 KV 命名空间（变量名 <b>SYNC_KV</b>）+ 新增环境变量 <b>API_KEY</b>（自定义密码）<br>
+                4. 复制 Worker 的 <code>https://xxx.workers.dev</code> 地址，粘到上方「同步服务地址」<br>
+                5. API Key 填你在 Worker 里设的 API_KEY → 点「生成」创建同步码 → 保存<br>
                 <span style="color:var(--text-muted);font-size:12px">打开页面自动拉取，每次修改自动推送（1.5s 防抖）</span><br>
-                <span style="color:var(--text-muted);font-size:12px">推送失败排查：①API Key 是否过期 ②同步码对应 bin 是否被删 ③浏览器到 api.jsonbin.io 网络是否通畅（国内网络偶尔不稳）④JSON 体超过 10KB（jsonbin 免费版上限）</span>
+                <span style="color:var(--text-muted);font-size:12px">推送失败排查：①API Key 是否错误 ②同步码对应记录是否被删 ③网络是否通畅 ④JSON 体超限（jsonbin 免费版 10KB / Cloudflare KV 25MB）</span>
               </div>
             </div>
             <div class="modal-foot">
@@ -4401,6 +4419,9 @@
         modal.querySelectorAll('[data-act=close]').forEach(b => b.addEventListener('click', closeModal));
         modal.querySelector('[data-act=save]').addEventListener('click', () => {
           const wasEnabled = state.sync.enabled;
+          // v2.2.0：保存时也保存自定义同步地址（去掉结尾斜杠）
+          const baseEl = document.getElementById('inpSyncBase');
+          state.sync.base = baseEl ? baseEl.value.trim().replace(/\/+$/, '') : '';
           state.sync.apiKey = document.getElementById('inpSyncApiKey').value.trim();
           state.sync.code = document.getElementById('inpSyncCode').value.trim();
           state.sync.enabled = document.getElementById('inpSyncEnabled').checked;
@@ -4408,7 +4429,7 @@
           persistLocal();
           closeModal();
           updateSyncBtn();
-          showToast(state.sync.enabled ? '云同步已启用' : '云同步已关闭');
+          showToast(state.sync.enabled ? (state.sync.base ? '云同步已启用（自建后端）' : '云同步已启用') : '云同步已关闭');
           if (state.sync.enabled) syncPull();
         });
         modal.querySelector('#btnGenCode')?.addEventListener('click', generateSyncCode);
@@ -4418,7 +4439,7 @@
           if (!cloudPulled) { showToast('请等待云端数据拉取完成后再推送'); return; }
           clearTimeout(pushTimer);
           state.sync.status = 'syncing'; updateSyncBtn();
-          fetch(`${JSONBIN_BASE}/${state.sync.code}`, {
+          fetch(`${syncBase()}/${state.sync.code}`, {
             method: 'PUT',
             headers: syncHeaders(),
             body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, updatedAt: new Date().toISOString() })
@@ -4447,8 +4468,10 @@
         modal.querySelector('#btnSyncLink')?.addEventListener('click', () => {
           const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || state.sync.apiKey;
           const code = document.getElementById('inpSyncCode')?.value.trim() || state.sync.code;
+          const baseEl = document.getElementById('inpSyncBase');
+          const base = (baseEl ? baseEl.value.trim() : (state.sync.base || '')).replace(/\/+$/, '');
           if (!apiKey || !code) { showToast('请先填写 API Key 和同步码'); return; }
-          const link = `${location.origin}${location.pathname}#sync=${encodeURIComponent(apiKey)}&${encodeURIComponent(code)}`;
+          const link = `${location.origin}${location.pathname}#sync=${encodeURIComponent(apiKey)}&${encodeURIComponent(code)}${base ? '&' + encodeURIComponent(base) : ''}`;
           const box = modal.querySelector('#syncLinkBox');
           const inp = modal.querySelector('#syncLinkUrl');
           if (box && inp) { inp.value = link; box.style.display = 'block'; inp.select(); }
@@ -4778,7 +4801,14 @@
     /* ============================================================
      * 云同步 (jsonbin.io)
      * ============================================================ */
-    const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+    // v2.2.0：默认走 jsonbin.io；若用户配置了自定义同步地址（Cloudflare Workers KV），则用用户的
+    const JSONBIN_BASE_DEFAULT = 'https://api.jsonbin.io/v3/b';
+
+    // 动态解析当前使用的同步后端地址（去掉结尾斜杠，避免拼接出双斜杠）
+    function syncBase() {
+      const custom = (state.sync && state.sync.base) ? String(state.sync.base).trim().replace(/\/+$/, '') : '';
+      return custom || JSONBIN_BASE_DEFAULT;
+    }
 
     function syncHeaders(extra = {}) {
       return { 'X-Master-Key': state.sync.apiKey, 'Content-Type': 'application/json', ...extra };
@@ -4790,7 +4820,7 @@
       if (!state.sync.enabled || !state.sync.apiKey || !state.sync.code) { cloudPulled = true; return; }
       if (!silent) { state.sync.status = 'syncing'; updateSyncBtn(); }
       try {
-        const res = await fetch(`${JSONBIN_BASE}/${state.sync.code}/latest`, {
+        const res = await fetch(`${syncBase()}/${state.sync.code}/latest`, {
           headers: { 'X-Master-Key': state.sync.apiKey }
         });
         if (!res.ok) { if (!silent) { state.sync.status = 'err'; updateSyncBtn(); } cloudPulled = true; return; }
@@ -4828,7 +4858,7 @@
       pushTimer = setTimeout(async () => {
         state.sync.status = 'syncing'; updateSyncBtn();
         try {
-          const res = await fetch(`${JSONBIN_BASE}/${state.sync.code}`, {
+          const res = await fetch(`${syncBase()}/${state.sync.code}`, {
             method: 'PUT',
             headers: syncHeaders(),
             body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, updatedAt: new Date().toISOString() })
@@ -4872,12 +4902,14 @@
     }
 
     async function testSync() {
+      const baseEl = document.getElementById('inpSyncBase');
+      const base = (baseEl ? baseEl.value.trim() : '').replace(/\/+$/, '') || JSONBIN_BASE_DEFAULT;
       const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || '';
       const code = document.getElementById('inpSyncCode')?.value.trim() || '';
       if (!apiKey) { showToast('请输入 API Key'); return; }
       if (!code) { showToast('请输入同步码（或点「生成」）'); return; }
       try {
-        const res = await fetch(`${JSONBIN_BASE}/${code}/latest`, {
+        const res = await fetch(`${base}/${code}/latest`, {
           headers: { 'X-Master-Key': apiKey }
         });
         if (res.ok) { showToast('✅ 连接成功（云端有数据）'); }
@@ -4889,15 +4921,21 @@
     }
 
     async function generateSyncCode() {
+      const baseEl = document.getElementById('inpSyncBase');
+      const base = (baseEl ? baseEl.value.trim() : '').replace(/\/+$/, '') || JSONBIN_BASE_DEFAULT;
       const apiKey = document.getElementById('inpSyncApiKey')?.value.trim() || '';
       if (!apiKey) { showToast('请先输入 API Key'); return; }
       try {
-        const res = await fetch(JSONBIN_BASE, {
+        const res = await fetch(base, {
           method: 'POST',
           headers: { 'X-Master-Key': apiKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({ accounts: state.accounts, activityEndDate: state.activityEndDate, createdAt: new Date().toISOString() })
         });
-        if (!res.ok) { showToast('创建失败：HTTP ' + res.status); return; }
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          showToast(`创建失败：HTTP ${res.status}${body ? ' · ' + body.slice(0, 120) : ''}`);
+          return;
+        }
         const data = await res.json();
         const binId = data.metadata?.id;
         if (binId) {
@@ -4931,11 +4969,13 @@
       autoResetExpiredActivities();
 
       // URL hash 同步配置：#sync=<apiKey>&<code> — 跨域名迁移同步设置
-      const hashMatch = location.hash.match(/^#sync=(.+)&(.+)$/);
+      // v2.2.0：链接带第三段 = 自定义同步地址（可选，老链接无此段时按 jsonbin 处理）
+      const hashMatch = location.hash.match(/^#sync=([^&]+)&([^&]+)(?:&(.+))?$/);
       if (hashMatch) {
-        const [ , encKey, encCode ] = hashMatch;
+        const [ , encKey, encCode, encBase ] = hashMatch;
         state.sync.apiKey = decodeURIComponent(encKey);
         state.sync.code = decodeURIComponent(encCode);
+        state.sync.base = encBase ? decodeURIComponent(encBase) : '';
         state.sync.enabled = true;
         cloudPulled = false; // 阻止推送，等 syncPull 先拉取
         persistLocal();
